@@ -20,13 +20,13 @@ import Effect.Class.Console (log)
 foreign import startRepl :: ({ text :: String } -> Effect (P.Promise String)) -> Effect Unit
 foreign import getApkKey :: Effect String
 
-userFromJson :: Json -> Either String { data :: { image_url :: String } }
-userFromJson = decodeJson
+parseImageJson :: Json -> Either String { data :: { image_url :: String } }
+parseImageJson = decodeJson
 
 getImageUrlJsonResponse response =
   response
     # lmap AX.printError
-    >>= (\ { body } -> userFromJson body)
+    >>= (\ { body } -> parseImageJson body)
     # either identity (\x -> x.data.image_url)
 
 handleMsg :: { text :: String } -> Aff String
