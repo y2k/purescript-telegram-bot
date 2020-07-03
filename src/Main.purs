@@ -15,12 +15,10 @@ import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
 
--- https://www.npmjs.com/package/node-telegram-bot-api
-
 foreign import startBotRepl :: ({ text :: String } -> Effect (P.Promise String)) -> Effect Unit
 foreign import getApiKey :: Effect String
 
-parseImageJson :: Json -> Either String { data :: { image_url :: String } }
+parseImageJson :: Json -> Either String { data :: { image_mp4_url :: String } }
 parseImageJson = decodeJson
 
 getImageUrlFromResponse response =
