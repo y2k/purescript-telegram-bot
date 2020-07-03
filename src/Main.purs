@@ -17,8 +17,8 @@ import Effect.Class.Console (log)
 
 -- https://www.npmjs.com/package/node-telegram-bot-api
 
-foreign import startRepl :: ({ text :: String } -> Effect (P.Promise String)) -> Effect Unit
-foreign import getApkKey :: Effect String
+foreign import startBotRepl :: ({ text :: String } -> Effect (P.Promise String)) -> Effect Unit
+foreign import getApiKey :: Effect String
 
 parseImageJson :: Json -> Either String { data :: { image_url :: String } }
 parseImageJson = decodeJson
@@ -31,7 +31,7 @@ getImageUrlJsonResponse response =
 
 handleMsg :: { text :: String } -> Aff String
 handleMsg msg = do
-  apiKey <- liftEffect getApkKey
+  apiKey <- liftEffect getApiKey
   result <- AX.request $ AX.defaultRequest { url = "https://api.giphy.com/v1/gifs/random?api_key=" <> apiKey <> "&tag=cat", 
                                              method = Left GET, 
                                              responseFormat = ResponseFormat.json }
@@ -39,5 +39,5 @@ handleMsg msg = do
 
 main :: Effect Unit
 main = void $ launchAff $ do
-  _ <- liftEffect $ startRepl (\msg -> P.fromAff $ handleMsg msg)
+  _ <- liftEffect $ startBotRepl (\msg -> P.fromAff $ handleMsg msg)
   log $ "Bot started..."

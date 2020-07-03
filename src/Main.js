@@ -2,11 +2,11 @@
 
 const TelegramBot = require('node-telegram-bot-api');
 
-exports.getApkKey = function () {
+exports.getApiKey = function () {
   return process.env.GIPHY_API_KEY
 }
 
-exports.startRepl = function (f) {
+exports.startBotRepl = function (f) {
   return function () {
     const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
     bot.on('message', (msg) => {
