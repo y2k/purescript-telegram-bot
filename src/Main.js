@@ -2,16 +2,19 @@
 
 const TelegramBot = require('node-telegram-bot-api');
 
-exports.test = function (handleRequest) {
+exports.getApkKey = function () {
+  return process.env.GIPHY_API_KEY
+}
+
+exports.startRepl = function (f) {
   return function () {
-    return 42;
-  }
+    const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
+    bot.on('message', (msg) => {
+      const chatId = msg.chat.id;
+      let eff = f(msg)();
+      eff.then(function (result) {
+        bot.sendMessage(chatId, result);
+      })
+    });
+  };
 };
-
-const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
-bot.on('message', (msg) => {
-  console.log(msg);
-
-  const chatId = msg.chat.id;
-  bot.sendMessage(chatId, 'Received your message');
-});
