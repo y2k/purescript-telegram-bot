@@ -25,7 +25,7 @@ getImageUrlFromResponse response =
   response
     # lmap AX.printError
     >>= (\ { body } -> parseImageJson body)
-    # either identity (\x -> x.data.image_url)
+    # either identity (\x -> x.data.image_mp4_url)
 
 handleMsg :: { text :: String } -> Aff String
 handleMsg msg = do
