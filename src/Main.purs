@@ -23,7 +23,7 @@ foreign import getApiKey :: Effect String
 parseImageJson :: Json -> Either String { data :: { image_url :: String } }
 parseImageJson = decodeJson
 
-getImageUrlJsonResponse response =
+getImageUrlFromResponse response =
   response
     # lmap AX.printError
     >>= (\ { body } -> parseImageJson body)
@@ -35,7 +35,7 @@ handleMsg msg = do
   result <- AX.request $ AX.defaultRequest { url = "https://api.giphy.com/v1/gifs/random?api_key=" <> apiKey <> "&tag=cat", 
                                              method = Left GET, 
                                              responseFormat = ResponseFormat.json }
-  pure $ getImageUrlJsonResponse result
+  pure $ getImageUrlFromResponse result
 
 main :: Effect Unit
 main = void $ launchAff $ do
