@@ -24,7 +24,7 @@ import Effect.Class.Console (log)
 parseImageJson :: Json -> Either String { data :: { image_mp4_url :: String } }
 parseImageJson = decodeJson
 
-data Cmd = 
+data Cmd =
     SendVideo String String
   | SendMessage String String
   | DownloadJson String (Either AX.Error { body :: Json } -> Cmd)
@@ -35,17 +35,17 @@ getImageUrlFromResponse response =
     >>= (\ { body } -> parseImageJson body)
     # map (\x -> x.data.image_mp4_url)
 
-handleImageLoaded chat response =
+onImageJsonLoaded chat response =
   case getImageUrlFromResponse response of
     Right url -> SendVideo chat url
     Left error -> SendVideo chat error
 
-handleMsg { apiKey } msg =
+update { apiKey } msg =
   let telegramCmd = match (unsafeRegex "/[^@]+" noFlags) msg.text >>= head in
   case telegramCmd of
-    Just "/cat" -> 
+    Just "/cat" ->
       let url = "https://api.giphy.com/v1/gifs/random?api_key=" <> apiKey <> "&tag=cat" in
-      [ DownloadJson url (handleImageLoaded msg.chat) ]
+      [ DownloadJson url (onImageJsonLoaded msg.chat) ]
     _ -> []
 
 foreign import data Bot :: Type
@@ -61,7 +61,7 @@ executeCmd bot cmd =
     SendMessage chat text -> sendMessage bot chat text *> pure [] # liftEffect
     DownloadJson url f ->
       do
-        result <- 
+        result <-
           AX.defaultRequest { url = url, method = Left GET, responseFormat = ResponseFormat.json }
           # AX.request
         pure [ f (map (\r -> { body : r.body }) result) ]
@@ -80,6 +80,6 @@ main :: Effect Unit
 main = do
   startBotRepl (\msg -> launchAff_ $ do
     apiKey <- liftEffect getApiKey
-    let cmds = handleMsg { apiKey : apiKey } msg
+    let cmds = update { apiKey : apiKey } msg
     executeCmds msg.bot cmds)
   log $ "Bot started..."
