@@ -8,7 +8,6 @@ exports.sendMessage = bot => chatId => text => () => bot.sendMessage(chatId, tex
 exports.startBotRepl = f => () => {
   const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
   bot.on('message', msg => {
-    let eff = f({ bot: bot, chat: msg.chat.id });
-    eff().then(function (result) { result(); })
+    f({ bot: bot, chat: msg.chat.id, text: msg.text || "" })()
   });
 };

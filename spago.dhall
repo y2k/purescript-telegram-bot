@@ -12,6 +12,7 @@ You can edit this file as you like.
   , "console"
   , "effect"
   , "psci-support"
+  , "strings"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]
