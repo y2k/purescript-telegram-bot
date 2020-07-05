@@ -43,11 +43,8 @@ handleImageMsg msg = launchAff_ $ do
     Left error -> liftEffect $ sendMessage msg.bot msg.chat ("Bot error (" <> error <> ")")
 
 handleMsg msg =
-  case match (unsafeRegex "/[^@]+" noFlags) msg.text of
-    Just xs -> 
-      case head xs of
-        Just "/cat" -> handleImageMsg msg
-        _ -> pure unit
+  case match (unsafeRegex "/[^@]+" noFlags) msg.text >>= head of
+    Just "/cat" -> handleImageMsg msg
     _ -> pure unit
 
 main :: Effect Unit
