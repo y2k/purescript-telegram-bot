@@ -98,11 +98,10 @@ executeCmds :: Bot -> Array Cmd -> Aff Unit
 executeCmds bot cmds =
   case cmds of
     [] -> pure unit
-    _ ->
-      do
-        let effects = cmds # map (executeCmd bot)
-        newCmds <- sequence effects
-        executeCmds bot (concat newCmds)
+    _ -> do
+      let effects = cmds # map (executeCmd bot)
+      newCmds <- sequence effects
+      executeCmds bot (concat newCmds)
 
 main :: Effect Unit
 main = do
