@@ -3,6 +3,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 
 exports.getApiKey = () => process.env.GIPHY_API_KEY
+exports.deleteMessage = bot => chatId => msgId => () => bot.deleteMessage(chatId, msgId)
 exports.sendVideo = bot => chatId => replyMsg => video => caption => () =>
   bot.sendVideo(chatId, video, { caption: caption, reply_to_message_id: replyMsg });
 exports.sendMessage = bot => chatId => text => () => bot.sendMessage(chatId, text);
