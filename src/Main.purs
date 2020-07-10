@@ -69,6 +69,7 @@ update { apiKey } msg =
       case telegramCmd of
         Just "/cat" -> [ DownloadJson defUrl (onImageJsonLoaded msg.chat) ]
         Just "/dog" -> [ DownloadJson (mkUrl "puppy") (onImageJsonLoaded msg.chat) ]
+        Just "/parrot" -> [ DownloadJson (mkUrl "parrot") (onImageJsonLoaded msg.chat) ]
         Just "/animals" -> [ DownloadJson (mkUrl "cute-animals") (onImageJsonLoaded msg.chat) ]
         Just "/test_login" -> [ DownloadJson defUrl (onImageJsonLoadedForNewUser msg.chat "<user>" msg.id) ]
         _ -> []
