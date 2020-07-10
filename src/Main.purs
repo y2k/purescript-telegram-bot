@@ -60,15 +60,19 @@ onImageJsonLoadedForNewUser chatId username msgId response =
     Left error -> []
 
 update { apiKey } msg =
-  let url = "https://api.giphy.com/v1/gifs/random?api_key=" <> apiKey <> "&tag=cat" in
+  let mkUrl tag = makeUrl apiKey tag in
+  let defUrl = mkUrl "cute cat" in
   case toMaybe msg.regUserName of
-    Just name -> [ DownloadJson url (onImageJsonLoadedForNewUser msg.chat name msg.id) ]
+    Just name -> [ DownloadJson defUrl (onImageJsonLoadedForNewUser msg.chat name msg.id) ]
     Nothing ->
       let telegramCmd = match (unsafeRegex "/[^@]+" noFlags) msg.text >>= head in
       case telegramCmd of
-        Just "/cat" -> [ DownloadJson url (onImageJsonLoaded msg.chat) ]
-        Just "/test_login" -> [ DownloadJson url (onImageJsonLoadedForNewUser msg.chat "<user>" msg.id) ]
+        Just "/cat" -> [ DownloadJson defUrl (onImageJsonLoaded msg.chat) ]
+        Just "/roll" -> [ DownloadJson (mkUrl "cute animals") (onImageJsonLoaded msg.chat) ]
+        Just "/test_login" -> [ DownloadJson defUrl (onImageJsonLoadedForNewUser msg.chat "<user>" msg.id) ]
         _ -> []
+
+makeUrl apiKey tag = "https://api.giphy.com/v1/gifs/random?api_key=" <> apiKey <> "&tag=" <> tag
 
 foreign import data Bot :: Type
 foreign import sendVideo :: Bot -> String -> Nullable Int -> String-> Nullable String -> Effect (Promise { message_id :: Int })
