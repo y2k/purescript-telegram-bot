@@ -61,18 +61,19 @@ onImageJsonLoadedForNewUser chatId username msgId response =
 
 update { apiKey } msg =
   let mkUrl tag = makeUrl apiKey tag in
-  let defUrl = mkUrl "cute-kitten" in
+  let defUrl = mkUrl "cat" in
   case toMaybe msg.regUserName of
     Just name -> [ DownloadJson defUrl (onImageJsonLoadedForNewUser msg.chat name msg.id) ]
     Nothing ->
       let telegramCmd = match (unsafeRegex "/[^@]+" noFlags) msg.text >>= head in
       case telegramCmd of
         Just "/cat" -> [ DownloadJson defUrl (onImageJsonLoaded msg.chat) ]
-        Just "/roll" -> [ DownloadJson (mkUrl "cute-animals") (onImageJsonLoaded msg.chat) ]
+        Just "/dog" -> [ DownloadJson (mkUrl "puppy") (onImageJsonLoaded msg.chat) ]
+        Just "/animals" -> [ DownloadJson (mkUrl "cute-animals") (onImageJsonLoaded msg.chat) ]
         Just "/test_login" -> [ DownloadJson defUrl (onImageJsonLoadedForNewUser msg.chat "<user>" msg.id) ]
         _ -> []
 
-makeUrl apiKey tag = "https://api.giphy.com/v1/gifs/random?api_key=" <> apiKey <> "&tag=" <> tag
+makeUrl apiKey tag = "https://api.giphy.com/v1/gifs/random?rating=pg&api_key=" <> apiKey <> "&tag=" <> tag
 
 foreign import data Bot :: Type
 foreign import sendVideo :: Bot -> String -> Nullable Int -> String-> Nullable String -> Effect (Promise { message_id :: Int })
