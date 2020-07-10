@@ -61,14 +61,14 @@ onImageJsonLoadedForNewUser chatId username msgId response =
 
 update { apiKey } msg =
   let mkUrl tag = makeUrl apiKey tag in
-  let defUrl = mkUrl "cute cat" in
+  let defUrl = mkUrl "cute-kitten" in
   case toMaybe msg.regUserName of
     Just name -> [ DownloadJson defUrl (onImageJsonLoadedForNewUser msg.chat name msg.id) ]
     Nothing ->
       let telegramCmd = match (unsafeRegex "/[^@]+" noFlags) msg.text >>= head in
       case telegramCmd of
         Just "/cat" -> [ DownloadJson defUrl (onImageJsonLoaded msg.chat) ]
-        Just "/roll" -> [ DownloadJson (mkUrl "cute animals") (onImageJsonLoaded msg.chat) ]
+        Just "/roll" -> [ DownloadJson (mkUrl "cute-animals") (onImageJsonLoaded msg.chat) ]
         Just "/test_login" -> [ DownloadJson defUrl (onImageJsonLoadedForNewUser msg.chat "<user>" msg.id) ]
         _ -> []
 
