@@ -11,6 +11,8 @@ You can edit this file as you like.
   , "argonaut-codecs"
   , "console"
   , "effect"
+  , "now"
+  , "numbers"
   , "psci-support"
   , "strings"
   ]
