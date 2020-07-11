@@ -40,16 +40,20 @@ handleCommandUpdate env msg chat =
     _ -> []
 
 handleButtonUpdate env msg message =
+  let sendNext tag count = uploadGifToChat env tag ((toIntOrZero count) - 1) message.chat message.from in
+  let isActual msgTime = timeInRange env.now msgTime (Milliseconds 10_000.0) in
   case (unpackData <$> toMaybe msg.data) of
     Just [ "reroll", _, tag, count, strTime ] ->
       case deserializeDateTime strTime of
-        Just msgTime | timeInRange env.now msgTime (Milliseconds 10_000.0) ->
+        Just msgTime | isActual msgTime ->
           concat [
             [ DeleteMessage message.chat.id message.message_id ]
-            , uploadGifToChat env tag ((toIntOrZero count) - 1) message.chat message.from ]
+            , sendNext tag count ]
         _ -> []
-    Just [ "more", _, tag, count, strTime ] ->
-      uploadGifToChat env tag 0 message.chat message.from
+    Just [ "more", _, tag, count, strTime ] -> 
+      case deserializeDateTime strTime of
+        Just msgTime | isActual msgTime -> sendNext tag count
+        _ -> []
     _ -> []
 
 handleSignupUpdate { apiKey } chat name msg =
