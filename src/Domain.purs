@@ -34,6 +34,7 @@ update env msg =
 
 handleCommandUpdate env msg chat =
   case tryExtractCommand msg of
+    Just "/start" -> [ SendMessage chat.id "/cat - 😸\n/dog - 🐶" ]
     Just "/cat" -> uploadGifToChat env "cat" 2 chat msg.from
     Just "/dog" -> uploadGifToChat env "puppy" 2 chat msg.from
     Just "/test_login" -> [ DownloadJson (makeUrl env.apiKey "cat") (onImageJsonLoadedForNewUser 5 chat.id "username" msg.id) ]
