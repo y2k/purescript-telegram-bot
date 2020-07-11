@@ -20,8 +20,8 @@ data Cmd =
   | DeleteMessage Int Int
   | Delay Milliseconds (Array Cmd)
 
-update env@{ apiKey } msg =
-  let mkUrl tag = makeUrl apiKey tag in
+update env msg =
+  let mkUrl tag = makeUrl env.apiKey tag in
   case toMaybe msg.message of
     Just message -> handleButtonUpdate env msg message
     Nothing ->
@@ -40,14 +40,16 @@ handleCommandUpdate env msg chat =
     _ -> []
 
 handleButtonUpdate env msg message =
-  case (unpackButtonData <$> toMaybe msg.data) of
-    Just [ "2", _, tag, count, strTime ] ->
+  case (unpackData <$> toMaybe msg.data) of
+    Just [ "reroll", _, tag, count, strTime ] ->
       case deserializeDateTime strTime of
         Just msgTime | timeInRange env.now msgTime (Milliseconds 10_000.0) ->
           concat [
             [ DeleteMessage message.chat.id message.message_id ]
             , uploadGifToChat env tag ((toIntOrZero count) - 1) message.chat message.from ]
         _ -> []
+    Just [ "more", _, tag, count, strTime ] ->
+      uploadGifToChat env tag 0 message.chat message.from
     _ -> []
 
 handleSignupUpdate { apiKey } chat name msg =
@@ -86,8 +88,9 @@ onVideoLoaded env tag count chat from response =
       case count of
         0 -> [ SendVideo chat.id Nothing url Nothing [] (\_ -> []) ]
         _ ->
-          let button = { text: "🎲 🎲 🎲", callback_data: packData from tag count env.now } in
-          [ SendVideo chat.id Nothing url Nothing [ button ] (\_ -> []) ]
+          let rerollButton = { text: "🎲 🎲 🎲", callback_data: packData "reroll" from tag count env.now } in
+          let moreButton = { text: "MORE", callback_data: packData "more" from tag count env.now } in
+          [ SendVideo chat.id Nothing url Nothing [ rerollButton, moreButton ] (\_ -> []) ]
     Left error -> [ SendMessage chat.id error ]
 
 makeUrl apiKey tag = "https://api.giphy.com/v1/gifs/random?rating=pg&api_key=" <> apiKey <> "&tag=" <> tag

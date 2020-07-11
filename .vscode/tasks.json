@@ -16,6 +16,12 @@
             "type": "shell",
             "command": "spago run",
             "problemMatcher": []
+        },
+        {
+            "label": "test",
+            "type": "shell",
+            "command": "spago test",
+            "problemMatcher": []
         }
     ]
 }

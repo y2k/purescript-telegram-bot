@@ -9,6 +9,7 @@ You can edit this file as you like.
   , "affjax"
   , "argonaut"
   , "argonaut-codecs"
+  , "assert"
   , "console"
   , "effect"
   , "now"
