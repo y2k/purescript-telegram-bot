@@ -21,6 +21,7 @@ exports.startBotRepl = f => () => {
         from: msg.from,
         message: msg.message,
         chat: msg.chat,
+        data: msg.data,
         text: "",
         id: 0,
         regUserName: "",
@@ -39,7 +40,7 @@ exports.startBotRepl = f => () => {
         chat: msg.chat,
         text: msg.text || "",
         id: msg.message_id,
-        regUserName: msg.new_chat_member && msg.new_chat_member.first_name,
+        regUserName: msg.new_chat_member && msg.new_chat_member.username,
       })()
     } catch (e) {
       console.log(e)

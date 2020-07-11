@@ -12,7 +12,8 @@ import Data.Array.NonEmpty (head)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..))
+import Data.Int (fromString, toNumber)
+import Data.Maybe (Maybe(..), maybe)
 import Data.Nullable (Nullable, toMaybe, toNullable)
 import Data.String (Pattern(..), split)
 import Data.String.Regex (match)
@@ -46,37 +47,39 @@ onImageJsonLoaded chat response =
     Right url -> [ SendVideo chat Nothing url Nothing (\_ -> []) [] ]
     Left error -> [ SendMessage chat error ]
 
-onDelayEnded chatId msgId =
-  [ Delay (Milliseconds 30_000.0) [ DeleteMessage chatId msgId ] ]
+onDelayEnded chatId timeout msgId =
+  [ Delay (Milliseconds (1_000.0 * (toNumber timeout))) [ DeleteMessage chatId msgId ] ]
 
-onImageJsonLoadedForNewUser chatId username msgId response =
+onImageJsonLoadedForNewUser timeout chatId username msgId response =
   case getImageUrlFromResponse response of
     Right url -> 
       [ SendVideo 
           chatId 
           (Just msgId) 
           url 
-          (Just $ username <> ", докажите что вы человек.\nНапишите что происходит на картинке. У вас 30 секунд 😸")
-          (onDelayEnded chatId)
+          (Just $ "@" <> username <> ", докажите что вы человек.\nНапишите что происходит на картинке. У вас " <> (show timeout) <> " секунд 😸")
+          (onDelayEnded chatId timeout)
           [] ]
     Left error -> []
 
-onVideoLoaded tag chat from response =
+onVideoLoaded tag count chat from response =
   case getImageUrlFromResponse response of
-    Right url -> 
-      let button = { text: "🎲 🎲 🎲", callback_data: "1|" <> (show from.id) <> "|" <> tag } in
-      [ SendVideo chat.id Nothing url Nothing (\_ -> []) [ button ] ]
+    Right url ->
+      case count of
+        0 -> [ SendVideo chat.id Nothing url Nothing (\_ -> []) [] ]
+        _ ->
+          let button = { text: "🎲 🎲 🎲 ", callback_data: "1|" <> (show from.id) <> "|" <> tag <> "|" <> (show count) } in
+          [ SendVideo chat.id Nothing url Nothing (\_ -> []) [ button ] ]
     Left error -> [ SendMessage chat.id error ]
 
-loadImageForVideo env tag chat from =
-  [ DownloadJson (makeUrl env.apiKey tag) (onVideoLoaded tag chat from) ]
+loadImageForVideo env tag count chat from =
+  [ DownloadJson (makeUrl env.apiKey tag) (onVideoLoaded tag count chat from) ]
 
 reroll env data' msg =
-  -- case split (Pattern "|") data' of
-  --   [ _, _, tag ] -> 
-  --     [ DeleteMessage msg.chat.id msg.message_id ] <> (loadImageForVideo env tag msg.chat msg.from)
-  --   _ -> [ DeleteMessage msg.chat.id msg.message_id ]
-  [ DeleteMessage msg.chat.id msg.message_id ]
+  case split (Pattern "|") data' of
+    [ "1", _, tag, count ] -> 
+      [ DeleteMessage msg.chat.id msg.message_id ] <> (loadImageForVideo env tag ((toIntOrDef count) - 1) msg.chat msg.from)
+    _ -> []
 
 update env@{ apiKey } msg =
   let mkUrl tag = makeUrl apiKey tag in
@@ -90,16 +93,19 @@ update env@{ apiKey } msg =
         Nothing -> []
         Just chat ->
           case toMaybe msg.regUserName of
-            Just name -> [ DownloadJson (mkUrl "cat") (onImageJsonLoadedForNewUser chat.id name msg.id) ]
+            Just name -> [ DownloadJson (mkUrl "cat") (onImageJsonLoadedForNewUser 30 chat.id name msg.id) ]
             Nothing ->
               let telegramCmd = match (unsafeRegex "/[^@]+" noFlags) msg.text >>= head in
               case telegramCmd of
-                Just "/cat" -> loadImageForVideo env "cat" chat msg.from
-                Just "/dog" -> loadImageForVideo env "puppy" chat msg.from
-                Just "/parrot" -> loadImageForVideo env "parrot" chat msg.from
+                Just "/cat" -> loadImageForVideo env "cat" 2 chat msg.from
+                Just "/dog" -> loadImageForVideo env "puppy" 2 chat msg.from
+                Just "/test_login" -> [ DownloadJson (mkUrl "cat") (onImageJsonLoadedForNewUser 5 chat.id "username" msg.id) ]
                 _ -> []
 
 makeUrl apiKey tag = "https://api.giphy.com/v1/gifs/random?rating=pg&api_key=" <> apiKey <> "&tag=" <> tag
+
+toIntOrDef x =
+  fromString x # maybe 0 identity
 
 foreign import data Bot :: Type
 foreign import getApiKey :: Effect String
