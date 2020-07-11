@@ -8,7 +8,6 @@ import Data.Argonaut.Decode (decodeJson)
 import Data.Array (concat)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
-import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (toMaybe)
 import Data.Time.Duration (Milliseconds(..))
@@ -44,7 +43,7 @@ handleButtonUpdate env msg message =
   case (unpackButtonData <$> toMaybe msg.data) of
     Just [ "2", _, tag, count, strTime ] ->
       case deserializeDateTime strTime of
-        Just msgTime | timeInRange env.now msgTime (Milliseconds 5_000.0) ->
+        Just msgTime | timeInRange env.now msgTime (Milliseconds 10_000.0) ->
           concat [
             [ DeleteMessage message.chat.id message.message_id ]
             , uploadGifToChat env tag ((toIntOrZero count) - 1) message.chat message.from ]
@@ -63,13 +62,8 @@ getImageUrlFromResponse response =
     >>= (\ { body } -> parseImageJson body)
     # map (\x -> x.data.image_mp4_url)
 
-onImageJsonLoaded chat response =
-  case getImageUrlFromResponse response of
-    Right url -> [ SendVideo chat Nothing url Nothing [] (\_ -> []) ]
-    Left error -> [ SendMessage chat error ]
-
 deleteMessageAfterTimeout chatId timeout msgId =
-  [ Delay (Milliseconds (1_000.0 * (toNumber timeout))) [ DeleteMessage chatId msgId ] ]
+  [ Delay (millisecondsFromSeconds timeout) [ DeleteMessage chatId msgId ] ]
 
 onImageJsonLoadedForNewUser timeout chatId username msgId response =
   case getImageUrlFromResponse response of
@@ -92,7 +86,7 @@ onVideoLoaded env tag count chat from response =
       case count of
         0 -> [ SendVideo chat.id Nothing url Nothing [] (\_ -> []) ]
         _ ->
-          let button = { text: "🎲 🎲 🎲 ", callback_data: "2|" <> (show from.id) <> "|" <> tag <> "|" <> (show count) <> "|" <> (serializeDateTime env.now) } in
+          let button = { text: "🎲 🎲 🎲", callback_data: packData from tag count env.now } in
           [ SendVideo chat.id Nothing url Nothing [ button ] (\_ -> []) ]
     Left error -> [ SendMessage chat.id error ]
 
