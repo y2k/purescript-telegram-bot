@@ -41,8 +41,8 @@ handleCommandUpdate env msg chat =
     _ -> []
 
 handleButtonUpdate env msg message =
-  let sendNext tag count = uploadGifToChat env tag ((toIntOrZero count) - 1) message.chat message.from in
-  let isActual msgTime = timeInRange env.now msgTime (Milliseconds 10_000.0) in
+  let sendNext tag count = uploadGifToChat env tag 99 message.chat message.from in
+  let isActual msgTime = timeInRange env.now msgTime (Milliseconds 5_000.0) in
   case (unpackData <$> toMaybe msg.data) of
     Just [ "reroll", _, tag, count, strTime ] ->
       case deserializeDateTime strTime of
@@ -94,8 +94,7 @@ onVideoLoaded env tag count chat from response =
         0 -> [ SendVideo chat.id Nothing url Nothing [] (\_ -> []) ]
         _ ->
           let rerollButton = { text: "🎲 🎲 🎲", callback_data: packData "reroll" from tag count env.now } in
-          let moreButton = { text: "MORE", callback_data: packData "more" from tag count env.now } in
-          [ SendVideo chat.id Nothing url Nothing [ rerollButton, moreButton ] (\_ -> []) ]
+          [ SendVideo chat.id Nothing url Nothing [ rerollButton ] (\_ -> []) ]
     Left error -> [ SendMessage chat.id error ]
 
 makeUrl apiKey tag = "https://api.giphy.com/v1/gifs/random?rating=pg&api_key=" <> apiKey <> "&tag=" <> tag
