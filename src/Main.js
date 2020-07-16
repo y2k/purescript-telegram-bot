@@ -2,6 +2,19 @@
 
 const TelegramBot = require('node-telegram-bot-api');
 
+exports.editMessageMedia = bot => chatId => msgId => url => buttons => () => {
+  console.log("editMessageMedia(chatId = " + chatId + ", msgId = " + msgId + ", url = " + url + ")")
+  bot.editMessageMedia(
+    {
+      media: url,
+      type: "video"
+    },
+    {
+      chat_id: chatId,
+      message_id: msgId,
+      reply_markup: { inline_keyboard: [buttons] }
+    })
+}
 exports.getApiKey = () => process.env.GIPHY_API_KEY
 exports.deleteMessage = bot => chatId => msgId => () => bot.deleteMessage(chatId, msgId)
 exports.sendVideo = bot => chatId => replyMsg => video => caption => buttons => () =>

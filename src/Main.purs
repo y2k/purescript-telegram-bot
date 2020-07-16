@@ -19,6 +19,7 @@ import Effect.Now (nowDateTime)
 
 foreign import data Bot :: Type
 foreign import getApiKey :: Effect String
+foreign import editMessageMedia :: Bot -> Int -> Int -> String -> Array { text :: String, callback_data :: String } -> Effect Void
 foreign import sendVideo :: Bot -> Int -> Nullable Int -> String-> Nullable String -> Array { text :: String, callback_data :: String } -> Effect (Promise { message_id :: Int })
 foreign import sendMessage :: Bot -> Int -> String -> Effect Void
 foreign import deleteMessage :: Bot -> Int -> Int -> Effect Void
@@ -27,6 +28,10 @@ foreign import startBotRepl :: ({ from :: { id :: Int }, bot :: Bot, chat :: Nul
 executeCmd :: Bot -> Cmd -> Aff (Array Cmd)
 executeCmd bot cmd =
   case cmd of
+    EditVideo x -> 
+      editMessageMedia bot x.chatId x.messageId x.url x.keyboard
+      *> pure []
+      # liftEffect
     SendVideo chat msgId url caption keyboard f -> do
       msg <- toAffE $ sendVideo bot chat (toNullable msgId) url (toNullable caption) keyboard
       pure $ f msg.message_id

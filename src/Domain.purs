@@ -5,7 +5,6 @@ import Prelude
 import Affjax as AX
 import Data.Argonaut.Core (Json)
 import Data.Argonaut.Decode (decodeJson)
-import Data.Array (concat)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
@@ -18,6 +17,7 @@ data Cmd =
   | SendMessage Int String
   | DownloadJson String (Either AX.Error { body :: Json } -> Array Cmd)
   | DeleteMessage Int Int
+  | EditVideo { chatId :: Int, messageId :: Int, url :: String, keyboard :: Array { text :: String, callback_data :: String } }
   | Delay Milliseconds (Array Cmd)
 
 update env msg =
@@ -35,27 +35,27 @@ update env msg =
 handleCommandUpdate env msg chat =
   case tryExtractCommand msg of
     Just "/start" -> [ SendMessage chat.id "/cat - 😸\n/dog - 🐶" ]
-    Just "/cat" -> uploadGifToChat env "cat" 2 chat msg.from
-    Just "/dog" -> uploadGifToChat env "puppy" 2 chat msg.from
+    Just "/cat" -> uploadGifToChat env "cat" chat msg.from
+    Just "/dog" -> uploadGifToChat env "puppy" chat msg.from
     Just "/test_login" -> [ DownloadJson (makeUrl env.apiKey "cat") (onImageJsonLoadedForNewUser 5 chat.id "username" msg.id) ]
     _ -> []
 
-handleButtonUpdate env msg message =
-  let sendNext tag count = uploadGifToChat env tag 99 message.chat message.from in
-  let isActual msgTime = timeInRange env.now msgTime (Milliseconds 5_000.0) in
-  case (unpackData <$> toMaybe msg.data) of
-    Just [ "reroll", _, tag, count, strTime ] ->
+handleButtonUpdate env updateMessage message =
+  let isActual msgTime = timeInRange env.now msgTime (Milliseconds 10_000.0) in
+  case (unpackData <$> toMaybe updateMessage.data) of
+    Just [ "reroll", _, tag, strTime ] ->
       case deserializeDateTime strTime of
         Just msgTime | isActual msgTime ->
-          concat [
-            [ DeleteMessage message.chat.id message.message_id ]
-            , sendNext tag count ]
-        _ -> []
-    Just [ "more", _, tag, count, strTime ] -> 
-      case deserializeDateTime strTime of
-        Just msgTime | isActual msgTime -> sendNext tag count
+            [ DownloadJson (makeUrl env.apiKey tag) (onVideoLoadedForEdit env tag message) ]
         _ -> []
     _ -> []
+
+onVideoLoadedForEdit env tag message response =
+  case getImageUrlFromResponse response of
+    Right url ->
+      let rerollButton = { text: "🎲 🎲 🎲", callback_data: packData "reroll" message.from tag env.now } in
+      [ EditVideo { chatId: message.chat.id, messageId: message.message_id, url: url, keyboard: [ rerollButton ] } ]
+    Left error -> [ SendMessage message.chat.id error ]
 
 handleSignupUpdate { apiKey } chat name msg =
   [ DownloadJson (makeUrl apiKey "cat") (onImageJsonLoadedForNewUser 30 chat.id name msg.id) ]
@@ -84,17 +84,14 @@ onImageJsonLoadedForNewUser timeout chatId username msgId response =
           (deleteMessageAfterTimeout chatId timeout) ]
     Left error -> []
 
-uploadGifToChat env tag count chat from =
-  [ DownloadJson (makeUrl env.apiKey tag) (onVideoLoaded env tag count chat from) ]
+uploadGifToChat env tag chat from =
+  [ DownloadJson (makeUrl env.apiKey tag) (onVideoLoaded env tag chat from) ]
 
-onVideoLoaded env tag count chat from response =
+onVideoLoaded env tag chat from response =
   case getImageUrlFromResponse response of
     Right url ->
-      case count of
-        0 -> [ SendVideo chat.id Nothing url Nothing [] (\_ -> []) ]
-        _ ->
-          let rerollButton = { text: "🎲 🎲 🎲", callback_data: packData "reroll" from tag count env.now } in
-          [ SendVideo chat.id Nothing url Nothing [ rerollButton ] (\_ -> []) ]
+      let rerollButton = { text: "🎲 🎲 🎲", callback_data: packData "reroll" from tag env.now } in
+      [ SendVideo chat.id Nothing url Nothing [ rerollButton ] (\_ -> []) ]
     Left error -> [ SendMessage chat.id error ]
 
 makeUrl apiKey tag = "https://api.giphy.com/v1/gifs/random?rating=pg&api_key=" <> apiKey <> "&tag=" <> tag

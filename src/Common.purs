@@ -26,12 +26,12 @@ deserializeDateTime str = N.fromString str <#> Milliseconds >>= instant <#> toDa
 
 timeInRange to from maxDiff = diff to from < maxDiff
 
-packData :: String -> { id :: Int } -> String -> Int -> DateTime -> String
-packData cmd from tag count now = "3|" <> cmd <> "|" <> (show from.id) <> "|" <> tag <> "|" <> (show count) <> "|" <> (serializeDateTime now)
+packData :: String -> { id :: Int } -> String -> DateTime -> String
+packData cmd from tag now = "4|" <> cmd <> "|" <> (show from.id) <> "|" <> tag <> "|" <> (serializeDateTime now)
 
 unpackData data' = 
   case uncons $ split (Pattern "|") data' of
-    Just { head: "3", tail } -> tail
+    Just { head: "4", tail } -> tail
     _ -> []
 
 millisecondsFromSeconds timeout = Milliseconds (1_000.0 * (toNumber timeout))
