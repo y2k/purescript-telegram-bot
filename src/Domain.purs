@@ -14,11 +14,11 @@ import Common
 
 data Cmd =
     SendVideo Int (Maybe Int) String (Maybe String) (Array { text :: String, callback_data :: String }) (Int -> Array Cmd)
-  | SendMessage Int String
+  | SendMessage { chatId :: Int, text :: String }
   | DownloadJson String (Either AX.Error { body :: Json } -> Array Cmd)
-  | DeleteMessage Int Int
+  | DeleteMessage { chatId :: Int, messageId :: Int }
   | EditVideo { chatId :: Int, messageId :: Int, url :: String, keyboard :: Array { text :: String, callback_data :: String } }
-  | Delay Milliseconds (Array Cmd)
+  | Delay { duration :: Milliseconds, commands :: (Array Cmd) }
 
 update env msg =
   let mkUrl tag = makeUrl env.apiKey tag in
@@ -34,7 +34,7 @@ update env msg =
 
 handleCommandUpdate env msg chat =
   case tryExtractCommand msg of
-    Just "/start" -> [ SendMessage chat.id "/cat - 😸\n/dog - 🐶" ]
+    Just "/start" -> [ SendMessage { chatId: chat.id, text: "/cat - 😸\n/dog - 🐶" } ]
     Just "/cat" -> uploadGifToChat env "cat" chat msg.from
     Just "/dog" -> uploadGifToChat env "puppy" chat msg.from
     Just "/test_login" -> [ DownloadJson (makeUrl env.apiKey "cat") (onImageJsonLoadedForNewUser 5 chat.id "username" msg.id) ]
@@ -55,7 +55,7 @@ onVideoLoadedForEdit env tag message response =
     Right url ->
       let rerollButton = { text: "🎲 🎲 🎲", callback_data: packData "reroll" message.from tag env.now } in
       [ EditVideo { chatId: message.chat.id, messageId: message.message_id, url: url, keyboard: [ rerollButton ] } ]
-    Left error -> [ SendMessage message.chat.id error ]
+    Left error -> [ SendMessage { chatId: message.chat.id, text: error } ]
 
 handleSignupUpdate { apiKey } chat name msg =
   [ DownloadJson (makeUrl apiKey "cat") (onImageJsonLoadedForNewUser 30 chat.id name msg.id) ]
@@ -70,7 +70,7 @@ getImageUrlFromResponse response =
     # map (\x -> x.data.image_mp4_url)
 
 deleteMessageAfterTimeout chatId timeout msgId =
-  [ Delay (millisecondsFromSeconds timeout) [ DeleteMessage chatId msgId ] ]
+  [ Delay { duration: (millisecondsFromSeconds timeout), commands: [ DeleteMessage { chatId: chatId, messageId: msgId } ] } ]
 
 onImageJsonLoadedForNewUser timeout chatId username msgId response =
   case getImageUrlFromResponse response of
@@ -92,6 +92,6 @@ onVideoLoaded env tag chat from response =
     Right url ->
       let rerollButton = { text: "🎲 🎲 🎲", callback_data: packData "reroll" from tag env.now } in
       [ SendVideo chat.id Nothing url Nothing [ rerollButton ] (\_ -> []) ]
-    Left error -> [ SendMessage chat.id error ]
+    Left error -> [ SendMessage { chatId: chat.id, text: error } ]
 
 makeUrl apiKey tag = "https://api.giphy.com/v1/gifs/random?rating=pg&api_key=" <> apiKey <> "&tag=" <> tag

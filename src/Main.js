@@ -16,14 +16,14 @@ exports.editMessageMedia = bot => chatId => msgId => url => buttons => () => {
     })
 }
 exports.getApiKey = () => process.env.GIPHY_API_KEY
-exports.deleteMessage = bot => chatId => msgId => () => bot.deleteMessage(chatId, msgId)
+exports.deleteMessage = bot => x => () => bot.deleteMessage(x.chatId, x.messageId)
 exports.sendVideo = bot => chatId => replyMsg => video => caption => buttons => () =>
   bot.sendVideo(chatId, video, {
     caption: caption,
     reply_to_message_id: replyMsg,
     reply_markup: { inline_keyboard: [buttons] }
   });
-exports.sendMessage = bot => chatId => text => () => bot.sendMessage(chatId, text);
+exports.sendMessage = x => bot => () => bot.sendMessage(x.chatId, x.text);
 exports.startBotRepl = f => () => {
   const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
   bot.on('callback_query', msg => {
