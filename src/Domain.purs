@@ -41,7 +41,7 @@ handleCommandUpdate env msg chat =
     _ -> []
 
 handleButtonUpdate env updateMessage message =
-  let isActual msgTime = timeInRange env.now msgTime (Milliseconds 10_000.0) in
+  let isActual msgTime = timeInRange env.now msgTime (Milliseconds 30_000.0) in
   case (unpackData <$> toMaybe updateMessage.data) of
     Just [ "reroll", _, tag, strTime ] ->
       case deserializeDateTime strTime of
