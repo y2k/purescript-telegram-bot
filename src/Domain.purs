@@ -28,8 +28,11 @@ update env msg =
     Nothing ->
       case toMaybe msg.chat of
         Just chat ->
-          case toMaybe msg.regUserName of
-            Just name -> handleSignupUpdate env chat name msg
+          case toMaybe msg.new_chat_member of
+            Just x -> 
+              case toMaybe x.username of
+                Just name -> handleSignupUpdate env chat name msg
+                Nothing -> []
             Nothing -> handleCommandUpdate env msg chat
         Nothing -> []
 

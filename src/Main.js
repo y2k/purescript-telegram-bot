@@ -2,6 +2,7 @@
 
 const TelegramBot = require('node-telegram-bot-api');
 
+exports.unsafeParseJson = json => () => JSON.parse(json)
 exports.editMessageReplyMarkup = bot => chatId => msgId => buttons => () => {
   bot.editMessageReplyMarkup({ 
       inline_keyboard: [buttons] 
@@ -31,8 +32,6 @@ exports.sendVideo = bot => chatId => replyMsg => video => caption => buttons => 
   });
 exports.sendMessage = x => bot => () => bot.sendMessage(x.chatId, x.text);
 exports.startBotRepl = f => () => {
-  // ---
-  // ---
   const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
   bot.on('callback_query', msg => {
     console.log(msg)
@@ -45,7 +44,6 @@ exports.startBotRepl = f => () => {
         data: msg.data,
         text: "",
         id: 0,
-        regUserName: "",
       })()
     } catch (e) {
       console.log(e)
@@ -61,7 +59,7 @@ exports.startBotRepl = f => () => {
         chat: msg.chat,
         text: msg.text || "",
         id: msg.message_id,
-        regUserName: msg.new_chat_member && msg.new_chat_member.username,
+        new_chat_member: msg.new_chat_member,
       })()
     } catch (e) {
       console.log(e)

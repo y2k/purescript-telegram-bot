@@ -18,13 +18,14 @@ import Domain (Cmd(..), update)
 import Effect.Now (nowDateTime)
 
 foreign import data Bot :: Type
+foreign import unsafeParseJson :: String -> Effect _
 foreign import getApiKey :: Effect String
 foreign import editMessageReplyMarkup :: Bot -> Int -> Int -> Array { text :: String, callback_data :: String } -> Effect Void
 foreign import editMessageMedia :: Bot -> Int -> Int -> String -> Array { text :: String, callback_data :: String } -> Effect Void
 foreign import sendVideo :: Bot -> Int -> Nullable Int -> String-> Nullable String -> Array { text :: String, callback_data :: String } -> Effect (Promise { message_id :: Int })
 foreign import sendMessage :: { chatId :: Int, text :: String } -> Bot -> Effect Void
 foreign import deleteMessage :: Bot -> { chatId :: Int, messageId :: Int } -> Effect Void
-foreign import startBotRepl :: ({ from :: { id :: Int }, bot :: Bot, chat :: Nullable { id :: Int }, text :: String, id :: Int, regUserName :: Nullable String, data :: Nullable String, message :: Nullable { message_id :: Int, chat :: { id :: Int }, from :: { id :: Int } } } -> Effect Unit) -> Effect Unit
+foreign import startBotRepl :: ({ from :: { id :: Int }, bot :: Bot, chat :: Nullable { id :: Int }, text :: String, id :: Int, new_chat_member :: Nullable { username :: Nullable String }, data :: Nullable String, message :: Nullable { message_id :: Int, chat :: { id :: Int }, from :: { id :: Int } } } -> Effect Unit) -> Effect Unit
 
 executeCmd :: Bot -> Cmd -> Aff (Array Cmd)
 executeCmd bot cmd =
