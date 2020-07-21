@@ -9,6 +9,7 @@ import Data.DateTime.Instant (fromDateTime, unInstant, toDateTime, instant)
 import Data.Int (fromString, toNumber)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (unwrap)
+import Data.Nullable (toMaybe)
 import Data.Number (fromString) as N
 import Data.String (Pattern(..), split)
 import Data.String.Regex (match)
@@ -18,7 +19,10 @@ import Data.Time.Duration (Milliseconds(..))
 
 toIntOrZero x = fromString x # maybe 0 identity
 
-tryExtractCommand msg = match (unsafeRegex "/[^@]+" noFlags) msg.text >>= head
+tryExtractCommand msg = 
+  case toMaybe msg.text of
+    Just text -> match (unsafeRegex "/[^@]+" noFlags) text >>= head
+    Nothing -> Nothing
 
 serializeDateTime d = d # fromDateTime # unInstant # unwrap # show
 

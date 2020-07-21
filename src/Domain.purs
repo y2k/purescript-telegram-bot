@@ -7,15 +7,15 @@ import Data.Argonaut.Core (Json)
 import Data.Argonaut.Decode (decodeJson)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Nullable (toMaybe)
 import Data.Time.Duration (Milliseconds(..))
 import Common
 
 data Cmd =
-    SendVideo Int (Maybe Int) String (Maybe String) (Array { text :: String, callback_data :: String }) (Int -> Array Cmd)
+    SendVideo { chat :: Int, msgId :: (Maybe Int), url :: String, caption :: (Maybe String), keyboard :: (Array { text :: String, callback_data :: String }), f :: (Int -> Array Cmd) }
   | SendMessage { chatId :: Int, text :: String }
-  | DownloadJson String (Either AX.Error { body :: Json } -> Array Cmd)
+  | DownloadJson { url :: String, f :: (Either AX.Error { body :: Json } -> Array Cmd) }
   | DeleteMessage { chatId :: Int, messageId :: Int }
   | EditMessageButtons { chatId :: Int, messageId :: Int, keyboard :: Array { text :: String, callback_data :: String } }
   | EditVideo { chatId :: Int, messageId :: Int, url :: String, keyboard :: Array { text :: String, callback_data :: String } }
@@ -41,13 +41,15 @@ handleCommandUpdate env msg chat =
     Just "/start" -> [ SendMessage { chatId: chat.id, text: "/cat - 😸\n/dog - 🐶" } ]
     Just "/cat" -> uploadGifToChat env "cat" chat msg.from
     Just "/dog" -> uploadGifToChat env "puppy" chat msg.from
-    Just "/test_login" -> [ DownloadJson (makeUrl env.apiKey "cat") (onImageJsonLoadedForNewUser 5 chat.id "username" msg.id) ]
+    Just "/test_login" ->
+      let msgId = toMaybe msg.message_id # maybe 0 identity in 
+      [ DownloadJson { url: (makeUrl env.apiKey "cat"), f: (onImageJsonLoadedForNewUser 5 chat.id "username" msgId) } ]
     _ -> []
 
 handleButtonUpdate env updateMessage message =
   case (unpackData <$> toMaybe updateMessage.data) of
     Just [ "reroll", _, tag, strTime ] ->
-      [ DownloadJson (makeUrl env.apiKey tag) (onVideoLoadedForEdit env tag message) ]
+      [ DownloadJson { url: (makeUrl env.apiKey tag), f: (onVideoLoadedForEdit env tag message) } ]
     _ -> []
 
 onVideoLoadedForEdit env tag message response =
@@ -58,7 +60,8 @@ onVideoLoadedForEdit env tag message response =
     Left error -> [ SendMessage { chatId: message.chat.id, text: error } ]
 
 handleSignupUpdate { apiKey } chat name msg =
-  [ DownloadJson (makeUrl apiKey "cat") (onImageJsonLoadedForNewUser 30 chat.id name msg.id) ]
+  let msgId = toMaybe msg.message_id # maybe 0 identity in
+  [ DownloadJson { url: (makeUrl apiKey "cat"), f: (onImageJsonLoadedForNewUser 30 chat.id name msgId) } ]
 
 parseImageJson :: Json -> Either String { data :: { image_mp4_url :: String } }
 parseImageJson = decodeJson
@@ -76,16 +79,16 @@ onImageJsonLoadedForNewUser timeout chatId username msgId response =
   case getImageUrlFromResponse response of
     Right url -> 
       [ SendVideo 
-          chatId 
-          (Just msgId) 
-          url 
-          (Just $ "@" <> username <> ", докажите что вы человек.\nНапишите что происходит на картинке. У вас " <> (show timeout) <> " секунд 😸")
-          []
-          (deleteMessageAfterTimeout chatId timeout) ]
+          { chat: chatId 
+          , msgId: (Just msgId) 
+          , url: url 
+          , caption: (Just $ "@" <> username <> ", докажите что вы человек.\nНапишите что происходит на картинке. У вас " <> (show timeout) <> " секунд 😸")
+          , keyboard: []
+          , f: (deleteMessageAfterTimeout chatId timeout) } ]
     Left error -> []
 
 uploadGifToChat env tag chat from =
-  [ DownloadJson (makeUrl env.apiKey tag) (onVideoLoaded env tag chat from) ]
+  [ DownloadJson { url: (makeUrl env.apiKey tag), f: (onVideoLoaded env tag chat from) } ]
 
 onVideoLoaded env tag chat from response =
   let deleteKeyBoardByTimeout messageId =
@@ -96,7 +99,7 @@ onVideoLoaded env tag chat from response =
   case getImageUrlFromResponse response of
     Right url ->
       let rerollButton = { text: "🎲 🎲 🎲", callback_data: packData "reroll" from tag env.now } in
-      [ SendVideo chat.id Nothing url Nothing [ rerollButton ] deleteKeyBoardByTimeout ]
+      [ SendVideo { chat: chat.id, msgId: Nothing, url: url, caption: Nothing, keyboard: [ rerollButton ], f: deleteKeyBoardByTimeout } ]
     Left error -> [ SendMessage { chatId: chat.id, text: error } ]
 
 makeUrl apiKey tag = "https://api.giphy.com/v1/gifs/random?rating=pg&api_key=" <> apiKey <> "&tag=" <> tag
