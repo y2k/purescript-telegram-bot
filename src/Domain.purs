@@ -17,6 +17,7 @@ data Cmd =
   | SendMessage { chatId :: Int, text :: String }
   | DownloadJson String (Either AX.Error { body :: Json } -> Array Cmd)
   | DeleteMessage { chatId :: Int, messageId :: Int }
+  | EditMessageButtons { chatId :: Int, messageId :: Int, keyboard :: Array { text :: String, callback_data :: String } }
   | EditVideo { chatId :: Int, messageId :: Int, url :: String, keyboard :: Array { text :: String, callback_data :: String } }
   | Delay { duration :: Milliseconds, commands :: (Array Cmd) }
 
@@ -41,13 +42,9 @@ handleCommandUpdate env msg chat =
     _ -> []
 
 handleButtonUpdate env updateMessage message =
-  let isActual msgTime = timeInRange env.now msgTime (Milliseconds 30_000.0) in
   case (unpackData <$> toMaybe updateMessage.data) of
     Just [ "reroll", _, tag, strTime ] ->
-      case deserializeDateTime strTime of
-        Just msgTime | isActual msgTime ->
-            [ DownloadJson (makeUrl env.apiKey tag) (onVideoLoadedForEdit env tag message) ]
-        _ -> []
+      [ DownloadJson (makeUrl env.apiKey tag) (onVideoLoadedForEdit env tag message) ]
     _ -> []
 
 onVideoLoadedForEdit env tag message response =
@@ -88,10 +85,15 @@ uploadGifToChat env tag chat from =
   [ DownloadJson (makeUrl env.apiKey tag) (onVideoLoaded env tag chat from) ]
 
 onVideoLoaded env tag chat from response =
+  let deleteKeyBoardByTimeout messageId =
+        [ Delay 
+          { duration: (Milliseconds 15_000.0)
+          , commands : [ EditMessageButtons { chatId: chat.id, messageId: messageId, keyboard: [] } ] } ] 
+  in
   case getImageUrlFromResponse response of
     Right url ->
       let rerollButton = { text: "🎲 🎲 🎲", callback_data: packData "reroll" from tag env.now } in
-      [ SendVideo chat.id Nothing url Nothing [ rerollButton ] (\_ -> []) ]
+      [ SendVideo chat.id Nothing url Nothing [ rerollButton ] deleteKeyBoardByTimeout ]
     Left error -> [ SendMessage { chatId: chat.id, text: error } ]
 
 makeUrl apiKey tag = "https://api.giphy.com/v1/gifs/random?rating=pg&api_key=" <> apiKey <> "&tag=" <> tag

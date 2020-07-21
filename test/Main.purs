@@ -21,7 +21,7 @@ test_reroll_after_time env = do
         , data: notNull $ packData "reroll" { id: 0 } "cat" (unsafePartial fromJust (adjust (Milliseconds (-60_000.0)) env.now))
         , from: { id: 0 }, chat: null, text: "", id: 0, regUserName: null }
   case update env msg of
-    [] -> assertTrue true
+    [ DownloadJson _ _ ] -> assertTrue true
     _ -> assertTrue false
 
 test_reroll env = do
