@@ -1,5 +1,6 @@
 module Domain (update, Cmd(..)) where
 
+import Common
 import Prelude
 
 import Affjax as AX
@@ -10,7 +11,29 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Nullable (toMaybe)
 import Data.Time.Duration (Milliseconds(..))
-import Common
+import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import Effect.Exception (throw)
+
+parseJson :: String -> Aff _
+parseJson _ = throw "" # liftEffect
+
+getCommand :: _ -> Maybe String
+getCommand _ = Nothing
+
+mkRandomUrl :: String -> String
+mkRandomUrl _ = ""
+
+foo env msg =
+  case getCommand msg of
+    Just "/cat" -> do
+      let url = mkRandomUrl env.token
+      json <- env.downloadText url
+      info :: { url :: String } <- parseJson json
+      id <- env.telegram.sendVideo msg.chat_id info.url
+      env.delay $ Milliseconds 15_000.0
+      env.telegram.removeKeyboard id
+    _ -> pure unit
 
 data Cmd =
     SendVideo { chat :: Int, msgId :: (Maybe Int), url :: String, caption :: (Maybe String), keyboard :: (Array { text :: String, callback_data :: String }), f :: (Int -> Array Cmd) }

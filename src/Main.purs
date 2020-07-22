@@ -6,15 +6,18 @@ import Affjax as AX
 import Affjax.ResponseFormat as ResponseFormat
 import Control.Promise (Promise, toAffE)
 import Data.Array (concat)
-import Data.Either (Either(..))
+import Data.Either (Either(..), either)
 import Data.HTTP.Method (Method(..))
+import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, toNullable)
 import Data.Traversable (sequence)
+import Domain (Cmd(..), update)
+import Domain2 as D
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_, delay)
+import Effect.Aff (Aff, delay, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
-import Domain (Cmd(..), update)
+import Effect.Exception (throw)
 import Effect.Now (nowDateTime)
 
 foreign import data Bot :: Type
@@ -55,11 +58,36 @@ executeCmds bot cmds =
       newCmds <- sequence effects
       executeCmds bot (concat newCmds)
 
+downloadJson url =
+  let r = AX.defaultRequest { url = url, method = Left GET, responseFormat = ResponseFormat.json }
+          # AX.request
+  in
+  bind r (\x -> either (\e -> throw "" # liftEffect) (\x -> pure x.body) x)
+
+sendVideo' bot chat msgId url caption keyboard = do
+  msg <- toAffE $ sendVideo bot chat (toNullable msgId) url (toNullable caption) keyboard
+  pure msg.message_id
+
+updateKeyboard' :: _ -> _ -> _ -> _ -> Aff _
+updateKeyboard' bot chatId messageId keyboard =
+  editMessageReplyMarkup bot chatId messageId keyboard *> pure unit # liftEffect
+
 main :: Effect Unit
 main = do
   startBotRepl (\msg -> launchAff_ $ do
     apiKey <- liftEffect getApiKey
     nowTime <- liftEffect nowDateTime
-    let cmds = update { apiKey : apiKey, now : nowTime } msg
-    executeCmds msg.bot cmds)
+
+    _ <- D.update
+           { token: apiKey
+           , delay: delay
+           , downloadJson: downloadJson
+           , telegram:
+               { sendVideo: (\chat url keyboard -> sendVideo' msg.bot chat Nothing url Nothing keyboard)
+               , updateKeyboard: (updateKeyboard' msg.bot) } }
+           msg
+
+    -- let cmds = update { apiKey : apiKey, now : nowTime } msg
+    -- executeCmds msg.bot cmds
+    pure unit)
   log $ "Bot started..."
