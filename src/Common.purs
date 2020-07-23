@@ -38,4 +38,12 @@ unpackData data' =
     Just { head: "4", tail } -> tail
     _ -> []
 
+packData' :: String -> String -> String
+packData' cmd tag = "5|" <> cmd <> "|" <> tag
+
+unpackData' data' = 
+  case uncons $ split (Pattern "|") data' of
+    Just { head: "5", tail } -> tail
+    _ -> []
+
 millisecondsFromSeconds timeout = Milliseconds (1_000.0 * (toNumber timeout))

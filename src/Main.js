@@ -2,6 +2,7 @@
 
 const TelegramBot = require('node-telegram-bot-api');
 
+exports.unsafeToJson = x => () => JSON.stringify(x)
 exports.unsafeParseJson = json => () => JSON.parse(json)
 exports.editMessageReplyMarkup = bot => chatId => msgId => buttons => () => {
   bot.editMessageReplyMarkup({

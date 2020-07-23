@@ -16,6 +16,7 @@ import Effect.Exception (throw)
 import Effect.Now (nowDateTime)
 import Main (unsafeParseJson)
 import Partial.Unsafe (unsafePartial)
+import Test.Domain2 as TD2
 
 test_user_login env = do
   msg <- unsafeParseJson """{ "message_id": 209149, "from": { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" }, "chat": { "id": -1001130908027, "title": "Programming Offtop", "username": "pofftop", "type": "supergroup" }, "date": 1595360387, "new_chat_participant": { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" }, "new_chat_member": { "id": 714583317, "is_bot": false, "username": "no_name", "first_name": "Anatoliy", "last_name": "Kernokus" }, "new_chat_members": [ { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" } ] }"""
@@ -83,3 +84,4 @@ main = do
   test_reroll { apiKey: "_KEY_", now: now }
   test_reroll_after_time { apiKey: "_KEY_", now: now }
   test_user_login { apiKey: "_KEY_", now: now }
+  TD2.main

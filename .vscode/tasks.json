@@ -14,7 +14,7 @@
         {
             "label": "run",
             "type": "shell",
-            "command": "spago run",
+            "command": "export NTBA_FIX_319=1 && spago run",
             "problemMatcher": []
         },
         {

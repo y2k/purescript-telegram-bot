@@ -8,10 +8,9 @@ import Control.Promise (Promise, toAffE)
 import Data.Array (concat)
 import Data.Either (Either(..), either)
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..))
-import Data.Nullable (Nullable, toNullable)
+import Data.Nullable (Nullable, null, toNullable)
 import Data.Traversable (sequence)
-import Domain (Cmd(..), update)
+import Domain (Cmd(..))
 import Domain2 as D
 import Effect (Effect)
 import Effect.Aff (Aff, delay, launchAff_)
@@ -21,6 +20,7 @@ import Effect.Exception (throw)
 import Effect.Now (nowDateTime)
 
 foreign import data Bot :: Type
+foreign import unsafeToJson :: forall a. a -> Effect String
 foreign import unsafeParseJson :: String -> Effect _
 foreign import getApiKey :: Effect String
 foreign import editMessageReplyMarkup :: Bot -> Int -> Int -> Array { text :: String, callback_data :: String } -> Effect Void
@@ -68,6 +68,15 @@ sendVideo' bot chat msgId url caption keyboard = do
   msg <- toAffE $ sendVideo bot chat (toNullable msgId) url (toNullable caption) keyboard
   pure msg.message_id
 
+sendVideo'' bot param = do
+  msg <- toAffE $ sendVideo bot param.chat null param.url param.caption param.keyboard
+  pure msg.message_id
+
+-- foreign import editMessageMedia :: Bot -> Int -> Int -> String -> Array { text :: String, callback_data :: String } -> Effect Void
+editVideo' bot chat msgId url keyboard =
+  editMessageMedia bot chat msgId url keyboard
+  *> pure unit # liftEffect
+
 updateKeyboard' :: _ -> _ -> _ -> _ -> Aff _
 updateKeyboard' bot chatId messageId keyboard =
   editMessageReplyMarkup bot chatId messageId keyboard *> pure unit # liftEffect
@@ -78,13 +87,20 @@ main = do
     apiKey <- liftEffect getApiKey
     nowTime <- liftEffect nowDateTime
 
+-- env.telegram.sendVideo2 
+--   { chat: chat.id
+--   , url: info.data.image_mp4_url 
+--   , caption: Just caption
+--   , keyboard: [] }
+
     _ <- D.update
            { token: apiKey
            , delay: delay
            , downloadJson: downloadJson
            , telegram:
-               { sendVideo: (\chat url keyboard -> sendVideo' msg.bot chat Nothing url Nothing keyboard)
-               , updateKeyboard: (updateKeyboard' msg.bot) } }
+               { updateKeyboard: (updateKeyboard' msg.bot)
+               , editVideo: (editVideo' msg.bot)
+               , sendVideo: (sendVideo'' msg.bot) } }
            msg
 
     -- let cmds = update { apiKey : apiKey, now : nowTime } msg

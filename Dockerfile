@@ -14,4 +14,6 @@ COPY --from=0 /app/index.js .
 COPY --from=0 /app/package.json .
 RUN yarn --production
 
+ENV export NTBA_FIX_319=1
+
 ENTRYPOINT ["node", "index.js"]
