@@ -31,10 +31,10 @@ update2 env msg =
               case parseImageJson json of
                 Right info ->
                   env.telegram.editVideo 
-                    message.chat.id 
-                    message.message_id 
-                    info.data.image_mp4_url 
-                    [ { callback_data: (packData' "reroll" tag), text: "🎲 🎲 🎲" } ]
+                    { chat: message.chat.id 
+                    , messageId: message.message_id 
+                    , url: info.data.image_mp4_url 
+                    , keyboard: [ { callback_data: (packData' "reroll" tag), text: "🎲 🎲 🎲" } ] }
                 Left _ -> pure unit
             _ -> pure unit
         Nothing -> pure unit
@@ -78,7 +78,7 @@ sendVideo env msg tag =
               , caption: null
               , keyboard: [ { callback_data: (packData' "reroll" tag), text: "🎲 🎲 🎲" } ] }
           _ <- env.delay $ Milliseconds 15_000.0
-          env.telegram.updateKeyboard chat.id id []
+          env.telegram.updateKeyboard { chat: chat.id, messageId: id, keyboard: [] }
         Left _ -> pure unit
     Nothing -> pure unit
 

@@ -64,22 +64,16 @@ downloadJson url =
   in
   bind r (\x -> either (\e -> throw "" # liftEffect) (\x -> pure x.body) x)
 
-sendVideo' bot chat msgId url caption keyboard = do
-  msg <- toAffE $ sendVideo bot chat (toNullable msgId) url (toNullable caption) keyboard
-  pure msg.message_id
-
 sendVideo'' bot param = do
   msg <- toAffE $ sendVideo bot param.chat null param.url param.caption param.keyboard
   pure msg.message_id
 
--- foreign import editMessageMedia :: Bot -> Int -> Int -> String -> Array { text :: String, callback_data :: String } -> Effect Void
-editVideo' bot chat msgId url keyboard =
-  editMessageMedia bot chat msgId url keyboard
+editVideo'' bot p =
+  editMessageMedia bot p.chat p.messageId p.url p.keyboard
   *> pure unit # liftEffect
 
-updateKeyboard' :: _ -> _ -> _ -> _ -> Aff _
-updateKeyboard' bot chatId messageId keyboard =
-  editMessageReplyMarkup bot chatId messageId keyboard *> pure unit # liftEffect
+updateKeyboard'' bot p =
+  editMessageReplyMarkup bot p.chat p.messageId p.keyboard *> pure unit # liftEffect
 
 main :: Effect Unit
 main = do
@@ -98,8 +92,8 @@ main = do
            , delay: delay
            , downloadJson: downloadJson
            , telegram:
-               { updateKeyboard: (updateKeyboard' msg.bot)
-               , editVideo: (editVideo' msg.bot)
+               { updateKeyboard: (updateKeyboard'' msg.bot)
+               , editVideo: (editVideo'' msg.bot)
                , sendVideo: (sendVideo'' msg.bot) } }
            msg
 

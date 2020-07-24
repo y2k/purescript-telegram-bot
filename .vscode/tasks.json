@@ -20,7 +20,7 @@
         {
             "label": "test",
             "type": "shell",
-            "command": "spago test",
+            "command": "export NTBA_FIX_319=1 && spago test",
             "problemMatcher": []
         }
     ]
