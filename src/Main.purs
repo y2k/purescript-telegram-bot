@@ -8,7 +8,7 @@ import Control.Promise (Promise, toAffE)
 import Data.Array (concat)
 import Data.Either (Either(..), either)
 import Data.HTTP.Method (Method(..))
-import Data.Nullable (Nullable, null, toNullable)
+import Data.Nullable (Nullable, toNullable)
 import Data.Traversable (sequence)
 import Domain (Cmd(..))
 import Domain2 as D
@@ -75,6 +75,9 @@ editVideo'' bot p =
 updateKeyboard'' bot p =
   editMessageReplyMarkup bot p.chat p.messageId p.keyboard *> pure unit # liftEffect
 
+deleteMessage' bot p =
+  deleteMessage bot { chatId: p.chat, messageId: p.message_id } *> pure unit # liftEffect
+
 main :: Effect Unit
 main = do
   startBotRepl (\msg -> launchAff_ $ do
@@ -94,7 +97,8 @@ main = do
            , telegram:
                { updateKeyboard: (updateKeyboard'' msg.bot)
                , editVideo: (editVideo'' msg.bot)
-               , sendVideo: (sendVideo'' msg.bot) } }
+               , sendVideo: (sendVideo'' msg.bot)
+               , deleteMessage: (deleteMessage' msg.bot) } }
            msg
 
     -- let cmds = update { apiKey : apiKey, now : nowTime } msg

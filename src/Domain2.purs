@@ -5,6 +5,7 @@ import Prelude
 import Common (packData', unpackData')
 import Data.Argonaut (Json, decodeJson)
 import Data.Either (Either(..))
+import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (toMaybe, notNull, null)
 import Data.Time.Duration (Milliseconds(..))
@@ -56,13 +57,15 @@ update2 env msg =
                     Right info -> do
                       let timeout = 30
                       let caption = username <> ", докажите что вы человек.\nНапишите что происходит на картинке. У вас " <> (show timeout) <> " секунд 😸"
-                      _ <-
+                      videoMsgId <-
                         env.telegram.sendVideo
                           { chat: chat.id
                           , reply_message_id: notNull message_id
                           , url: info.data.image_mp4_url 
                           , caption: notNull caption
                           , keyboard: [] }
+                      _ <- env.delay $ Milliseconds $ toNumber timeout
+                      _ <- env.telegram.deleteMessage { chat: chat.id, message_id: videoMsgId }
                       pure unit
                     Left _ -> pure unit
                 Nothing -> pure unit
