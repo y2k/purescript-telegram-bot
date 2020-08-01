@@ -41,20 +41,25 @@ update2 env msg =
     Nothing -> 
       case toMaybe msg.new_chat_member of
         Just newChatMember ->
-          case toMaybe newChatMember.username of
-            Just username ->
-              case toMaybe msg.chat of
-                Just chat -> do
+          case toMaybe msg.chat of
+            Just chat ->
+              case toMaybe msg.message_id of
+                Just message_id -> do
+                  let username = 
+                        case toMaybe newChatMember.username of
+                          Just username -> "@" <> username
+                          Nothing -> newChatMember.first_name
                   let tag = "cat"
                   let url = makeUrl env.token tag
                   json <- env.downloadJson url
                   case parseImageJson json of
                     Right info -> do
                       let timeout = 30
-                      let caption = "@" <> username <> ", докажите что вы человек.\nНапишите что происходит на картинке. У вас " <> (show timeout) <> " секунд 😸"
+                      let caption = username <> ", докажите что вы человек.\nНапишите что происходит на картинке. У вас " <> (show timeout) <> " секунд 😸"
                       _ <-
                         env.telegram.sendVideo
                           { chat: chat.id
+                          , reply_message_id: notNull message_id
                           , url: info.data.image_mp4_url 
                           , caption: notNull caption
                           , keyboard: [] }
@@ -74,6 +79,7 @@ sendVideo env msg tag =
           id <- 
             env.telegram.sendVideo
               { chat: chat.id
+              , reply_message_id: null
               , url: info.data.image_mp4_url
               , caption: null
               , keyboard: [ { callback_data: (packData' "reroll" tag), text: "🎲 🎲 🎲" } ] }

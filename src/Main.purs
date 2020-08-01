@@ -28,7 +28,7 @@ foreign import editMessageMedia :: Bot -> Int -> Int -> String -> Array { text :
 foreign import sendVideo :: Bot -> Int -> Nullable Int -> String-> Nullable String -> Array { text :: String, callback_data :: String } -> Effect (Promise { message_id :: Int })
 foreign import sendMessage :: { chatId :: Int, text :: String } -> Bot -> Effect Void
 foreign import deleteMessage :: Bot -> { chatId :: Int, messageId :: Int } -> Effect Void
-foreign import startBotRepl :: ({ from :: { id :: Int }, bot :: Bot, chat :: Nullable { id :: Int }, text :: Nullable String, message_id :: Nullable Int, new_chat_member :: Nullable { username :: Nullable String }, data :: Nullable String, message :: Nullable { message_id :: Int, chat :: { id :: Int }, from :: { id :: Int } } } -> Effect Unit) -> Effect Unit
+foreign import startBotRepl :: ({ from :: { id :: Int }, bot :: Bot, chat :: Nullable { id :: Int }, text :: Nullable String, message_id :: Nullable Int, new_chat_member :: Nullable { username :: Nullable String, first_name :: String }, data :: Nullable String, message :: Nullable { message_id :: Int, chat :: { id :: Int }, from :: { id :: Int } } } -> Effect Unit) -> Effect Unit
 
 executeCmd :: Bot -> Cmd -> Aff (Array Cmd)
 executeCmd bot cmd =
@@ -65,7 +65,7 @@ downloadJson url =
   bind r (\x -> either (\e -> throw "" # liftEffect) (\x -> pure x.body) x)
 
 sendVideo'' bot param = do
-  msg <- toAffE $ sendVideo bot param.chat null param.url param.caption param.keyboard
+  msg <- toAffE $ sendVideo bot param.chat param.reply_message_id param.url param.caption param.keyboard
   pure msg.message_id
 
 editVideo'' bot p =

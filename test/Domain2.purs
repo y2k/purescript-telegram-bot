@@ -22,20 +22,27 @@ testReroll =
 testDogCommand =
   assertTelegram
     """{ "message_id": 2882, "from": { "id": 241854720, "is_bot": false, "first_name": "Igor", "username": "angmarr", "language_code": "en" }, "chat": { "id": 241854720, "first_name": "Igor", "username": "angmarr", "type": "private" }, "date": 1595600304, "text": "/dog", "entities": [ { "offset": 0, "length": 4, "type": "bot_command" } ] }"""
-    [ "sv:{\"chat\":241854720,\"url\":\"_VIDEO_URL_\",\"caption\":null,\"keyboard\":[{\"callback_data\":\"5|reroll|puppy\",\"text\":\"🎲 🎲 🎲\"}]}"
+    [ "sv:{\"chat\":241854720,\"reply_message_id\":null,\"url\":\"_VIDEO_URL_\",\"caption\":null,\"keyboard\":[{\"callback_data\":\"5|reroll|puppy\",\"text\":\"🎲 🎲 🎲\"}]}"
     , "d:(Milliseconds 15000.0)"
     , "uk:{\"chat\":241854720,\"messageId\":0,\"keyboard\":[]}" ]
 
 testUserLogin = do
   assertTelegram
     """{ "message_id": 209149, "from": { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" }, "chat": { "id": -1001130908027, "title": "Programming Offtop", "username": "pofftop", "type": "supergroup" }, "date": 1595360387, "new_chat_participant": { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" }, "new_chat_member": { "id": 714583317, "is_bot": false, "username": "no_name", "first_name": "Anatoliy", "last_name": "Kernokus" }, "new_chat_members": [ { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" } ] }"""
-    [ "sv:{\"chat\":-1001130908027,\"url\":\"_VIDEO_URL_\",\"caption\":\"@no_name, докажите что вы человек.\\nНапишите что происходит на картинке. У вас 30 секунд 😸\",\"keyboard\":[]}" ]
+    [ "sv:{\"chat\":-1001130908027,\"reply_message_id\":209149,\"url\":\"_VIDEO_URL_\",\"caption\":\"@no_name, докажите что вы человек.\\nНапишите что происходит на картинке. У вас 30 секунд 😸\",\"keyboard\":[]}" ]
+
+testUserLoginWithoutName = do
+  assertTelegram
+    """{ "message_id": 209149, "from": { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" }, "chat": { "id": -1001130908027, "title": "Programming Offtop", "username": "pofftop", "type": "supergroup" }, "date": 1595360387, "new_chat_participant": { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" }, "new_chat_member": { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" }, "new_chat_members": [ { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" } ] }"""
+    [ "sv:{\"chat\":-1001130908027,\"reply_message_id\":209149,\"url\":\"_VIDEO_URL_\",\"caption\":\"Anatoliy, докажите что вы человек.\\nНапишите что происходит на картинке. У вас 30 секунд 😸\",\"keyboard\":[]}" ]
 
 main :: Effect Unit
 main = do
   _ <- testReroll
   _ <- testDogCommand
-  testUserLogin
+  _ <- testUserLogin
+  _ <- testUserLoginWithoutName
+  pure unit
 
 assertTelegram msgJson expectedResponses = do
   log <- Q.newQueue
