@@ -8,7 +8,7 @@ import Data.Either (Either(..))
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (toMaybe, notNull, null)
-import Data.Time.Duration (Milliseconds(..))
+import Data.Time.Duration (Milliseconds(..), Seconds(..))
 import Effect.Aff (Aff)
 
 update :: _ -> _ -> Aff Unit
@@ -64,7 +64,7 @@ update2 env msg =
                           , url: info.data.image_mp4_url 
                           , caption: notNull caption
                           , keyboard: [] }
-                      _ <- env.delay $ Milliseconds $ toNumber timeout
+                      _ <- env.delay $ Milliseconds $ toNumber (timeout * 1000)
                       _ <- env.telegram.deleteMessage { chat: chat.id, message_id: videoMsgId }
                       pure unit
                     Left _ -> pure unit
