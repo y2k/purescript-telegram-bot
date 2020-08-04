@@ -2,18 +2,18 @@ module Domain2 (update) where
 
 import Prelude
 
-import Common (packData', unpackData')
+import Common (packData', tryExtractCommand, unpackData')
 import Data.Argonaut (Json, decodeJson)
 import Data.Either (Either(..))
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (toMaybe, notNull, null)
-import Data.Time.Duration (Milliseconds(..), Seconds(..))
+import Data.Time.Duration (Milliseconds(..))
 import Effect.Aff (Aff)
 
 update :: _ -> _ -> Aff Unit
 update env msg =
-  case toMaybe msg.text of
+  case tryExtractCommand msg of
     Just "/cat" -> sendVideo env msg "cat"
     Just "/dog" -> sendVideo env msg "puppy"
     Nothing -> update2 env msg
