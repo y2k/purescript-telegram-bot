@@ -31,19 +31,25 @@ start env state = do
   xml <- env.downloadText { url: "http://joyreactor.cc/rss/tag/личинка+котэ" }
   let ids = parseGifIds xml
   case state.loaded of
-    Nothing -> ?TODO
+    Nothing ->
+      case minId ids of
+        Just id -> pure { newState: state { loaded = Just id }, cmd: [] }
+        Nothing -> pure { newState: state, cmd: [] }
     Just lastSendedId -> do
       case getNewId lastSendedId ids of
         Just newId -> do
           cmd <- env.sendVideo "" (makeVideoUrl newId)
-          pure { newState: state { loaded: newId }, cmd: [ cmd ] }
-        Nothing -> ?TODO
+          pure { newState: state { loaded = Just newId }, cmd: [ cmd ] }
+        Nothing -> pure { newState: state, cmd: [] }
+
+minId :: Array Int -> Maybe Int
+minId _ = Nothing -- FIXME:
 
 getNewId :: Int -> Array Int -> Maybe Int
-getNewId _ _ = ?TODO
+getNewId _ _ = Nothing -- FIXME:
 
 makeVideoUrl :: Int -> String
-makeVideoUrl id = ?TODO
+makeVideoUrl id = "" -- FIXME:
 
 parseGifIds :: String -> Array Int
-parseGifIds xml = ?TODO
+parseGifIds xml = [] -- FIXME:
