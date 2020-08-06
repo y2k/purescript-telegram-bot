@@ -1,4 +1,4 @@
-module PeriodicPostsImages (start, handleMessage, State) where
+module PeriodicPostsImages (start, handleMessage, State, emptyState) where
 
 import Prelude
 
@@ -12,7 +12,7 @@ import Effect.Aff (Aff)
 
 test :: Aff Unit
 test = do
-  let env = { downloadText: (\_ -> pure ""), sendVideo: (\_ _ -> pure 0) }
+  let env = { downloadText: (\_ -> pure ""), sendVideo: (\_ -> pure unit) }
   _ <- start env emptyState
   pure unit
 
@@ -26,21 +26,21 @@ emptyState = { loaded: Nothing, chats: Set.empty }
 handleMessage :: State -> String -> State
 handleMessage state _ = state
 
-start :: _ -> State -> Aff { newState :: State, cmd :: _ }
+start :: _ -> State -> Aff { newState :: State }
 start env state = do
   xml <- env.downloadText { url: "http://joyreactor.cc/rss/tag/личинка+котэ" }
   let ids = parseGifIds xml
   case state.loaded of
     Nothing ->
       case minId ids of
-        Just id -> pure { newState: state { loaded = Just id }, cmd: [] }
-        Nothing -> pure { newState: state, cmd: [] }
+        Just id -> pure { newState: state { loaded = Just id } }
+        Nothing -> pure { newState: state }
     Just lastSendedId -> do
       case getNewId lastSendedId ids of
         Just newId -> do
-          cmd <- env.sendVideo "" (makeVideoUrl newId)
-          pure { newState: state { loaded = Just newId }, cmd: [ cmd ] }
-        Nothing -> pure { newState: state, cmd: [] }
+          _ <- env.sendVideo { chatId: "", url: (makeVideoUrl newId) }
+          pure { newState: state { loaded = Just newId } }
+        Nothing -> pure { newState: state }
 
 minId :: Array Int -> Maybe Int
 minId _ = Nothing -- FIXME:
