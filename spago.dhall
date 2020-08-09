@@ -15,6 +15,7 @@ You can edit this file as you like.
   , "now"
   , "numbers"
   , "psci-support"
+  , "refs"
   , "strings"
   ]
 , packages = ./packages.dhall

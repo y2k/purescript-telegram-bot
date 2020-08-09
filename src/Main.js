@@ -32,12 +32,12 @@ exports.sendVideo = bot => chatId => replyMsg => video => caption => buttons => 
     reply_markup: { inline_keyboard: [buttons] }
   });
 exports.sendMessage = x => bot => () => bot.sendMessage(x.chatId, x.text);
-exports.startBotRepl = f => () => {
-  const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
+exports.createBot = () => new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
+exports.startBotRepl = bot => f => () => {
   function update(msg) {
     console.log(msg)
     try {
-      f(Object.assign({ bot: bot }, msg))()
+      f(msg)()
     } catch (e) {
       console.log(e)
     }
