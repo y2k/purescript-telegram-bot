@@ -2,14 +2,12 @@ module PeriodicPostsImages (start, handleMessage, State, emptyState, mkStart) wh
 
 import Prelude
 
+import Common as C
 import Data.Array as A
-import Data.Array.NonEmpty (toArray)
 import Data.Int (fromString)
 import Data.Maybe (Maybe(..))
 import Data.Set (Set)
 import Data.Set as Set
-import Data.String as S
-import Data.String.Regex as R
 import Data.String.Regex.Flags as RF
 import Data.String.Regex.Unsafe as RU
 import Effect (Effect)
@@ -38,7 +36,7 @@ start env state = do
   let ids = parseGifIds xml
   case state.loaded of
     Nothing ->
-      case maxInArray ids of
+      case C.maxInArray ids of
         Just id -> pure $ state { loaded = Just id }
         Nothing -> pure state
     Just lastSendedId -> do
@@ -48,45 +46,13 @@ start env state = do
           pure $ state { loaded = Just newId }
         Nothing -> pure state
 
-maxInArray :: Array Int -> Maybe Int
-maxInArray xs =
-  case A.uncons xs of
-    Nothing -> Nothing
-    Just { head, tail } ->
-      case maxInArray tail of
-        Nothing -> Just head
-        Just x -> Just $ max head x
-
-minInArray :: Array Int -> Maybe Int
-minInArray xs =
-  case A.uncons xs of
-    Nothing -> Nothing
-    Just { head, tail } ->
-      case minInArray tail of
-        Nothing -> Just head
-        Just x -> Just $ min head x
-
 getNewId :: Int -> Array Int -> Maybe Int
-getNewId x xs = A.filter (_ > x) xs # minInArray
+getNewId x xs = A.filter (_ > x) xs # C.minInArray
 
 makeVideoUrl :: Int -> String
 makeVideoUrl id = "http://img0.joyreactor.cc/pics/post/mp4/-" <> (show id) <> ".mp4"
 
 parseGifIds :: String -> Array Int
-parseGifIds xml =
-  S.split (S.Pattern "\n") xml
-  # A.concatMap parseGifIds'
-
-parseGifIds' :: String -> Array Int
-parseGifIds' xml =
-  case R.match videoRegex xml of
-    Nothing -> []
-    Just nea ->
-      nea 
-      # toArray
-      # A.mapMaybe (\x ->
-        case x of
-          Just x -> fromString x
-          Nothing -> Nothing)
+parseGifIds xml = C.matchAll videoRegex xml # A.mapMaybe fromString
 
 videoRegex = RU.unsafeRegex """"url": "http://img\d\.joyreactor\.cc/pics/post/full/.+?-(\d+).gif"""" RF.noFlags

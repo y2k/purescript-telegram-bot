@@ -10,7 +10,7 @@ import Data.Either (Either(..), either)
 import Data.HTTP.Method (Method(..))
 import Data.Nullable (Nullable, null)
 import Data.Time.Duration (Minutes(..), fromDuration)
-import Domain2 as D
+import Domain as D
 import Effect (Effect)
 import Effect.Aff (delay, launchAff_)
 import Effect.Class (liftEffect)
@@ -32,59 +32,52 @@ foreign import createBot :: Effect Bot
 foreign import startBotRepl :: Bot -> ({ from :: { id :: Int }, chat :: Nullable { id :: String }, text :: Nullable String, message_id :: Nullable Int, new_chat_member :: Nullable { username :: Nullable String, first_name :: String }, data :: Nullable String, message :: Nullable { message_id :: Int, chat :: { id :: String }, from :: { id :: Int } } } -> Effect Unit) -> Effect Unit
 
 download format url =
-  let r = AX.defaultRequest { url = url, method = Left GET, responseFormat = format }
-          # AX.request
-  in
+  let r = AX.defaultRequest { url = url, method = Left GET, responseFormat = format } # AX.request in
   bind r (\x -> either (\e -> throw (printError e) # liftEffect) (\x -> pure x.body) x)
 
 downloadJson = download ResponseFormat.json
 downloadText = download ResponseFormat.string
 
-sendVideo'' bot param = do
+sendVideo' bot param = do
   msg <- toAffE $ sendVideo bot param.chat param.reply_message_id param.url param.caption param.keyboard
   pure msg.message_id
 
-editVideo'' bot p =
+editVideo' bot p =
   editMessageMedia bot p.chat p.messageId p.url p.keyboard
   *> pure unit # liftEffect
 
-updateKeyboard'' bot p =
+updateKeyboard' bot p =
   editMessageReplyMarkup bot p.chat p.messageId p.keyboard *> pure unit # liftEffect
 
 deleteMessage' bot p =
   deleteMessage bot { chatId: p.chat, messageId: p.message_id } *> pure unit # liftEffect
 
 periodicPostsImages bot = do
-    start <- liftEffect $ PI.mkStart
-    let env = 
-         { downloadText: \x -> downloadText x.url
-         , sendVideo: \x -> (sendVideo'' bot ({ chat: x.chat, url: x.url, caption: null, reply_message_id: null, keyboard: [] })) }
-    let loop = do
-          _ <- start env
-          delay $ fromDuration $ Minutes 15.0
-          loop
-    loop
+  start <- liftEffect $ PI.mkStart
+  let env = 
+        { downloadText: \x -> downloadText x.url
+        , sendVideo: \x -> (sendVideo' bot ({ chat: x.chat, url: x.url, caption: null, reply_message_id: null, keyboard: [] })) }
+  let loop = do
+        _ <- start env
+        delay $ fromDuration $ Minutes 15.0
+        loop
+  loop
 
 main :: Effect Unit
 main = do
   bot <- createBot
-
   launchAff_ $ periodicPostsImages bot
-
   startBotRepl bot (\msg -> launchAff_ $ do
     apiKey <- liftEffect getApiKey
     nowTime <- liftEffect nowDateTime
-
-    _ <- D.update
-           { token: apiKey
-           , delay: delay
-           , downloadJson: downloadJson
-           , telegram:
-               { updateKeyboard: (updateKeyboard'' bot)
-               , editVideo: (editVideo'' bot)
-               , sendVideo: (sendVideo'' bot)
-               , deleteMessage: (deleteMessage' bot) } }
-           msg
-
-    pure unit)
+    D.update
+      { token: apiKey
+      , delay: delay
+      , downloadJson: downloadJson
+      , telegram:
+          { updateKeyboard: (updateKeyboard' bot)
+          , editVideo: (editVideo' bot)
+          , sendVideo: (sendVideo' bot)
+          , deleteMessage: (deleteMessage' bot) } }
+      msg)
   log $ "Bot started..."
