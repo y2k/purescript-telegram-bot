@@ -33,7 +33,7 @@ mkStart = do
 start :: _ -> State -> Aff State
 start env state = do
   xml <- env.downloadText { url: "http://joyreactor.cc/rss/tag/%D0%BB%D0%B8%D1%87%D0%B8%D0%BD%D0%BA%D0%B0%2B%D0%BA%D0%BE%D1%82%D1%8D" }
-  let ids = parseGifIds xml
+  let ids = A.concatMap parseGifIds [ xml ]
   case state.loaded of
     Nothing ->
       case C.maxInArray ids of
