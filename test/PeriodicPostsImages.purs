@@ -2,42 +2,68 @@ module Test.PeriodicPostsImages where
 
 import Prelude
 
-import Data.Argonaut (jsonParser)
-import Data.Either (fromRight)
 import Effect (Effect)
-import Effect.Aff (launchAff_)
+import Effect.Aff as A
 import Effect.Class (liftEffect)
-import Effect.Console as C
 import Main as M
-import Partial.Unsafe (unsafePartial)
 import PeriodicPostsImages as I
-import Queue as Q
 import Test.Assert (assertEqual)
+import TestUtils (runTest)
+import TestUtils as T
 
-test :: Effect Unit
-test = do
-  C.log $ "\n== PeriodicPostsImages.test ==\n"
-  log <- Q.newQueue
-  let env = 
-       { downloadText: (\_ -> liftEffect $ Q.unsafeReadTextFile "test/resources/rss.xml")
-       , sendVideo: (\x -> (M.unsafeToJson x >>= (\x -> Q.push (x) log)) # liftEffect) }
-  start <- I.mkStart
+main :: Effect Unit
+main = do
+  runTest "PeriodicPostsImages - test errors handle" do
+    let env =
+          { downloadText: (\x -> A.throwError (A.error "fake error"))
+          , sendVideo: (\x -> pure unit) }
+    start <- I.mkStart
+    A.launchAff_ $ start env
 
-  Q.reset log
-  _ <- launchAff_ $ start env
-  logA <- Q.toArray log
-  assertEqual { expected: [], actual: logA }
+  runTest "PeriodicPostsImages - no update at start" do
+    log <- T.newQueue
+    let env =
+          { downloadText: (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".1.xml")
+          , sendVideo: (\x -> (M.unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
+    start <- I.mkStart
 
-  Q.reset log
-  _ <- launchAff_ $ start $ env { downloadText = (\_ -> liftEffect $ Q.unsafeReadTextFile "test/resources/rss2.xml") }
-  logA <- Q.toArray log
-  assertEqual 
-    { expected: [ """{"chat":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/mp4/-6086130.mp4"}""" ]
-    , actual: logA }
+    _ <- A.launchAff_ $ start env
 
-  Q.reset log
-  _ <- launchAff_ $ start $ env { downloadText = (\_ -> liftEffect $ Q.unsafeReadTextFile "test/resources/rss2.xml") }
-  logA <- Q.toArray log
-  assertEqual { expected: [], actual: logA }
+    T.reset log
+    _ <- A.launchAff_ $ start env
+    logA <- T.toArray log
+    assertEqual { expected: [], actual: logA }
 
-unsafeParse x = jsonParser x # unsafePartial fromRight
+  runTest "PeriodicPostsImages - no updates after updates" do
+    log <- T.newQueue
+    let env =
+          { downloadText: (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".1.xml")
+          , sendVideo: (\x -> (M.unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
+    start <- I.mkStart
+
+    _ <- A.launchAff_ $ start env
+    _ <- A.launchAff_ $ start $ env { downloadText = (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".2.xml") }
+
+    T.reset log
+    _ <- A.launchAff_ $ start $ env { downloadText = (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".2.xml") }
+    logA <- T.toArray log
+    assertEqual { expected: [], actual: logA }
+
+  runTest "PeriodicPostsImages - test" do
+    log <- T.newQueue
+    let env =
+          { downloadText: (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".1.xml")
+          , sendVideo: (\x -> (M.unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
+    start <- I.mkStart
+
+    T.reset log
+    _ <- A.launchAff_ $ start env
+    logA <- T.toArray log
+    assertEqual { expected: [], actual: logA }
+
+    T.reset log
+    _ <- A.launchAff_ $ start $ env { downloadText = (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".2.xml") }
+    logA <- T.toArray log
+    assertEqual
+      { expected: [ """{"chat":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/mp4/-6086130.mp4"}""" ]
+      , actual: logA }

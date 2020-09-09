@@ -1,3 +1,9 @@
 {
-    "editor.tabSize": 2
+    "editor.tabSize": 2,
+    "files.exclude": {
+        "**/.psci_modules": true,
+        "**/.spago": true,
+        "**/node_modules": true,
+        "**/output": true
+    }
 }
