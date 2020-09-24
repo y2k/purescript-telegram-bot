@@ -35,14 +35,14 @@ main = do
   runTest "Domain.testUserLogin" do
     assertTelegram
       """{ "message_id": 209149, "from": { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" }, "chat": { "id": -1001130908027, "title": "Programming Offtop", "username": "pofftop", "type": "supergroup" }, "date": 1595360387, "new_chat_participant": { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" }, "new_chat_member": { "id": 714583317, "is_bot": false, "username": "no_name", "first_name": "Anatoliy", "last_name": "Kernokus" }, "new_chat_members": [ { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" } ] }"""
-      [ "sv:{\"chat\":-1001130908027,\"reply_message_id\":209149,\"url\":\"_VIDEO_URL_\",\"caption\":\"@no_name, докажите что вы человек.\\nНапишите что происходит на картинке. У вас 30.0 секунд 😸\",\"keyboard\":[]}"
+      [ "sv:{\"chat\":-1001130908027,\"reply_message_id\":209149,\"url\":\"_VIDEO_URL_\",\"caption\":\"@no_name, докажите что вы человек.\\nНапишите что происходит на картинке. У вас 30 секунд 😸\",\"keyboard\":[]}"
       , "d:(Milliseconds 30000.0)"
       , "dm:{\"chat\":-1001130908027,\"message_id\":42}" ]
 
   runTest "Domain.testUserLoginWithoutName" do
     assertTelegram
       """{ "message_id": 209149, "from": { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" }, "chat": { "id": -1001130908027, "title": "Programming Offtop", "username": "pofftop", "type": "supergroup" }, "date": 1595360387, "new_chat_participant": { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" }, "new_chat_member": { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" }, "new_chat_members": [ { "id": 714583317, "is_bot": false, "first_name": "Anatoliy", "last_name": "Kernokus" } ] }"""
-      [ "sv:{\"chat\":-1001130908027,\"reply_message_id\":209149,\"url\":\"_VIDEO_URL_\",\"caption\":\"Anatoliy, докажите что вы человек.\\nНапишите что происходит на картинке. У вас 30.0 секунд 😸\",\"keyboard\":[]}"
+      [ "sv:{\"chat\":-1001130908027,\"reply_message_id\":209149,\"url\":\"_VIDEO_URL_\",\"caption\":\"Anatoliy, докажите что вы человек.\\nНапишите что происходит на картинке. У вас 30 секунд 😸\",\"keyboard\":[]}"
       , "d:(Milliseconds 30000.0)"
       , "dm:{\"chat\":-1001130908027,\"message_id\":42}" ]
 

@@ -5,6 +5,7 @@ import Prelude
 import Common as C
 import Data.Argonaut (Json, decodeJson)
 import Data.Either (Either(..))
+import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (toMaybe, notNull, null)
 import Data.Time.Duration (Seconds(..), fromDuration)
@@ -47,7 +48,7 @@ handleLogin env chat message_id newChatMember = do
   json <- env.downloadJson url
   case parseImageJson json of
     Right info -> do
-      let timeout = 30.0
+      let timeout = 30
       let caption = username <> ", докажите что вы человек.\nНапишите что происходит на картинке. У вас " <> (show timeout) <> " секунд 😸"
       videoMsgId <-
         env.telegram.sendVideo
@@ -56,7 +57,7 @@ handleLogin env chat message_id newChatMember = do
           , url: info.data.image_mp4_url
           , caption: notNull caption
           , keyboard: [] }
-      _ <- env.delay $ fromDuration $ Seconds timeout
+      _ <- env.delay $ fromDuration $ Seconds $ toNumber timeout
       _ <- env.telegram.deleteMessage { chat: chat.id, message_id: videoMsgId }
       pure unit
     Left _ -> pure unit
