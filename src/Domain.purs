@@ -18,16 +18,16 @@ update env msg =
     Just text -> handleCommand env msg text
     Nothing ->
       case toMaybe msg.message of
-        Just message -> 
+        Just message ->
           case toMaybe msg.data of
             Just data' -> do
               case C.unpackData' data' of
                 [ "reroll", tag ] -> handleReroll env tag message
                 _ -> pure unit
             Nothing -> pure unit
-        Nothing -> 
+        Nothing ->
           case tuple3 (toMaybe msg.chat) (toMaybe msg.message_id) (toMaybe msg.new_chat_member) of
-            Tuple (Just chat) (Tuple (Just message_id) (Tuple (Just newChatMember) unit)) -> 
+            Tuple (Just chat) (Tuple (Just message_id) (Tuple (Just newChatMember) unit)) ->
               handleLogin env chat message_id newChatMember
             _ -> pure unit
 
@@ -38,7 +38,7 @@ handleCommand env msg text =
     _ -> pure unit
 
 handleLogin env chat message_id newChatMember = do
-  let username = 
+  let username =
         case toMaybe newChatMember.username of
           Just username -> "@" <> username
           Nothing -> newChatMember.first_name
@@ -53,7 +53,7 @@ handleLogin env chat message_id newChatMember = do
         env.telegram.sendVideo
           { chat: chat.id
           , reply_message_id: notNull message_id
-          , url: info.data.image_mp4_url 
+          , url: info.data.image_mp4_url
           , caption: notNull caption
           , keyboard: [] }
       _ <- env.delay $ fromDuration $ Seconds timeout
@@ -66,10 +66,10 @@ handleReroll env tag message = do
   json <- env.downloadJson url
   case parseImageJson json of
     Right info ->
-      env.telegram.editVideo 
-        { chat: message.chat.id 
-        , messageId: message.message_id 
-        , url: info.data.image_mp4_url 
+      env.telegram.editVideo
+        { chat: message.chat.id
+        , messageId: message.message_id
+        , url: info.data.image_mp4_url
         , keyboard: [ { callback_data: (C.packData' "reroll" tag), text: "🎲 🎲 🎲" } ] }
     Left _ -> pure unit
 
@@ -80,7 +80,7 @@ sendVideo env msg tag =
       json <- env.downloadJson url
       case parseImageJson json of
         Right info -> do
-          id <- 
+          id <-
             env.telegram.sendVideo
               { chat: chat.id
               , reply_message_id: null

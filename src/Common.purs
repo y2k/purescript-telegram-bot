@@ -20,7 +20,7 @@ import Data.String.Regex as R
 
 toIntOrZero x = fromString x # maybe 0 identity
 
-tryExtractCommand msg = 
+tryExtractCommand msg =
   case toMaybe msg.text of
     Just text -> match (unsafeRegex "/[^@]+" noFlags) text >>= head
     Nothing -> Nothing
@@ -34,7 +34,7 @@ timeInRange to from maxDiff = diff to from < maxDiff
 packData :: String -> { id :: Int } -> String -> DateTime -> String
 packData cmd from tag now = "4|" <> cmd <> "|" <> (show from.id) <> "|" <> tag <> "|" <> (serializeDateTime now)
 
-unpackData data' = 
+unpackData data' =
   case A.uncons $ S.split (S.Pattern "|") data' of
     Just { head: "4", tail } -> tail
     _ -> []
@@ -42,7 +42,7 @@ unpackData data' =
 packData' :: String -> String -> String
 packData' cmd tag = "5|" <> cmd <> "|" <> tag
 
-unpackData' data' = 
+unpackData' data' =
   case A.uncons $ S.split (S.Pattern "|") data' of
     Just { head: "5", tail } -> tail
     _ -> []
@@ -72,7 +72,7 @@ matchAll r xml =
         case R.match r xml of
           Nothing -> []
           Just nea ->
-            nea 
+            nea
             # toArray
             # A.mapMaybe identity
   in

@@ -54,7 +54,7 @@ deleteMessage' bot p =
 
 periodicPostsImages bot = do
   start <- liftEffect $ PI.mkStart
-  let env = 
+  let env =
         { downloadText: \x -> downloadText x.url
         , sendVideo: \x -> (sendVideo' bot ({ chat: x.chat, url: x.url, caption: null, reply_message_id: null, keyboard: [] })) }
   let loop = do

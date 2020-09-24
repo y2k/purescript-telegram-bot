@@ -15,7 +15,7 @@ main :: Effect Unit
 main = do
   runTest "PeriodicPostsImages - no update at start" do
     log <- T.newQueue
-    let env = 
+    let env =
           { downloadText: (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".1.xml")
           , sendVideo: (\x -> (M.unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
     start <- I.mkStart
@@ -29,7 +29,7 @@ main = do
 
   runTest "PeriodicPostsImages - no updates after updates" do
     log <- T.newQueue
-    let env = 
+    let env =
           { downloadText: (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".1.xml")
           , sendVideo: (\x -> (M.unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
     start <- I.mkStart
@@ -44,7 +44,7 @@ main = do
 
   runTest "PeriodicPostsImages - test" do
     log <- T.newQueue
-    let env = 
+    let env =
           { downloadText: (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".1.xml")
           , sendVideo: (\x -> (M.unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
     start <- I.mkStart
@@ -57,6 +57,6 @@ main = do
     T.reset log
     _ <- launchAff_ $ start $ env { downloadText = (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".2.xml") }
     logA <- T.toArray log
-    assertEqual 
+    assertEqual
       { expected: [ """{"chat":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/mp4/-6086130.mp4"}""" ]
       , actual: logA }
