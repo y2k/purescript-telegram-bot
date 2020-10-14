@@ -49,7 +49,7 @@ start env state = do
     Just lastSendedId -> do
       case getNewId lastSendedId ids of
         Just newId -> do
-          _ <- env.sendVideo { chat: "-1001130908027", url: (makeVideoUrl newId) }
+          _ <- env.sendVideo { chat: "-1001130908027", url: (makeVideoUrl newId), caption: "#котэ вам в ленту" }
           pure $ state { loaded = Just newId }
         Nothing -> pure state
 
