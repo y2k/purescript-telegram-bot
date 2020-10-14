@@ -4,15 +4,15 @@ import Prelude
 
 import Common as C
 import Data.Array as A
-import Data.Either (either)
 import Data.Int (fromString)
 import Data.Maybe (Maybe(..))
+import Data.Nullable (notNull)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String.Regex.Flags as RF
 import Data.String.Regex.Unsafe as RU
 import Effect (Effect)
-import Effect.Aff (Aff, catchError, try)
+import Effect.Aff (Aff, catchError)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
 import Effect.Ref (new, read, write)
@@ -49,7 +49,7 @@ start env state = do
     Just lastSendedId -> do
       case getNewId lastSendedId ids of
         Just newId -> do
-          _ <- env.sendVideo { chat: "-1001130908027", url: (makeVideoUrl newId), caption: "#котэ вам в ленту" }
+          _ <- env.sendVideo { chat: "-1001130908027", url: (makeVideoUrl newId), caption: notNull "#котэ вам в ленту" }
           pure $ state { loaded = Just newId }
         Nothing -> pure state
 

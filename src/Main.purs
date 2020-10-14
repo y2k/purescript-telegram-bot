@@ -56,7 +56,7 @@ periodicPostsImages bot = do
   start <- liftEffect $ PI.mkStart
   let env =
         { downloadText: \x -> downloadText x.url
-        , sendVideo: \x -> (sendVideo' bot ({ chat: x.chat, url: x.url, caption: null, reply_message_id: null, keyboard: [] })) }
+        , sendVideo: \x -> (sendVideo' bot ({ chat: x.chat, url: x.url, caption: x.caption, reply_message_id: null, keyboard: [] })) }
   let loop = do
         _ <- start env
         delay $ fromDuration $ Minutes 15.0
