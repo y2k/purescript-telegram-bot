@@ -25,8 +25,8 @@ foreign import unsafeParseJson :: String -> Effect _
 foreign import getApiKey :: Effect String
 foreign import editMessageReplyMarkup :: Bot -> String -> Int -> Array { text :: String, callback_data :: String } -> Effect Void
 foreign import editMessageMedia :: Bot -> String -> Int -> String -> Array { text :: String, callback_data :: String } -> Effect Void
-foreign import sendVideo :: Bot -> String -> Nullable Int -> String-> Nullable String -> Array { text :: String, callback_data :: String } -> Effect (Promise { message_id :: Int })
-foreign import sendMessage :: { chatId :: String, text :: String } -> Bot -> Effect Void
+foreign import sendVideo :: Bot -> String -> Nullable Int -> String -> Nullable String -> Array { text :: String, callback_data :: String } -> Effect (Promise { message_id :: Int })
+foreign import sendMessage :: { chatId :: String, text :: String } -> Bot -> Effect (Promise Void)
 foreign import deleteMessage :: Bot -> { chatId :: String, messageId :: Int } -> Effect Void
 foreign import createBot :: Effect Bot
 foreign import startBotRepl :: Bot -> ({ from :: { id :: Int }, chat :: Nullable { id :: String }, text :: Nullable String, message_id :: Nullable Int, new_chat_member :: Nullable { username :: Nullable String, first_name :: String }, data :: Nullable String, message :: Nullable { message_id :: Int, chat :: { id :: String }, from :: { id :: Int } } } -> Effect Unit) -> Effect Unit
