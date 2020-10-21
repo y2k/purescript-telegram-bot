@@ -7,13 +7,12 @@ import Data.Array as A
 import Data.Int (fromString)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (notNull)
-import Data.Either (Either(..))
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String.Regex.Flags as RF
 import Data.String.Regex.Unsafe as RU
 import Effect (Effect)
-import Effect.Aff (Aff, catchError, try)
+import Effect.Aff (Aff, catchError)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
 import Effect.Ref (new, read, write)
@@ -51,13 +50,10 @@ start env state = do
       case getNewId lastSendedId ids of
         Just newId -> do
           let urls = makeVideoUrl newId
-          result <- try $ env.sendVideo { chat: "-1001130908027", url: urls.video, caption: notNull "#котэ вам в ленту" }
-          case result of
-            Left err -> do
-              _ <- env.sendVideo { chat: "-1001130908027", url: urls.gif, caption: notNull "#котэ вам в ленту" }
-              pure $ state { loaded = Just newId }
-            Right resp ->
-              pure $ state { loaded = Just newId }
+          _ <- catchError
+                (env.sendVideo { chat: "-1001130908027", url: urls.video, caption: notNull "#котэ вам в ленту" })
+                (\_ -> env.sendVideo { chat: "-1001130908027", url: urls.gif, caption: notNull "#котэ вам в ленту" })
+          pure $ state { loaded = Just newId }
         Nothing -> pure state
 
 getNewId :: Int -> Array Int -> Maybe Int
