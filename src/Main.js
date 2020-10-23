@@ -13,7 +13,6 @@ exports.editMessageReplyMarkup = bot => chatId => msgId => buttons => () => {
   })
 }
 exports.editMessageMedia = bot => chatId => msgId => url => buttons => () => {
-  console.log("editMessageMedia(chatId = " + chatId + ", msgId = " + msgId + ", url = " + url + ")")
   bot.editMessageMedia({
     media: url,
     type: "video"
@@ -35,7 +34,6 @@ exports.sendMessage = x => bot => () => bot.sendMessage(x.chatId, x.text);
 exports.createBot = () => new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 exports.startBotRepl = bot => f => () => {
   function update(msg) {
-    console.log(msg)
     try {
       f(msg)()
     } catch (e) {
