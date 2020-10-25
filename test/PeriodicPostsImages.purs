@@ -2,9 +2,11 @@ module Test.PeriodicPostsImages where
 
 import Prelude
 
+import Data.String (Pattern(..), contains)
 import Effect (Effect)
 import Effect.Aff as A
 import Effect.Class (liftEffect)
+import Effect.Exception (throw)
 import Main as M
 import PeriodicPostsImages as I
 import Test.Assert (assertEqual)
@@ -65,5 +67,29 @@ main = do
     _ <- A.launchAff_ $ start $ env { downloadText = (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".2.xml") }
     logA <- T.toArray log
     assertEqual
-      { expected: [ """{"chat":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/mp4/-6086130.mp4","caption":"#котэ вам в ленту"}""" ]
+      { expected: [ """{"chat":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/mp4/-6086130.mp4","caption":"время постить #котиков"}""" ]
+      , actual: logA }
+
+  runTest "PeriodicPostsImages - send gif if no video" do
+    log <- T.newQueue
+    let env =
+          { downloadText: (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".1.xml")
+          , sendVideo: (\x -> (M.unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
+    start <- I.mkStart
+
+    T.reset log
+    _ <- A.launchAff_ $ start env
+    -- logA <- T.toArray log
+    -- assertEqual { expected: [], actual: logA }
+
+    T.reset log
+    _ <- A.launchAff_ $ start $ env
+      { downloadText = (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".2.xml")
+      , sendVideo = (\x ->
+        if contains (Pattern ".mp4") x.url
+          then (throw "" # liftEffect)
+          else ((M.unsafeToJson x >>= (\x -> T.push x log)) # liftEffect)) }
+    logA <- T.toArray log
+    assertEqual
+      { expected: [ """{"chat":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/-6086130.gif","caption":"время постить #котиков"}""" ]
       , actual: logA }

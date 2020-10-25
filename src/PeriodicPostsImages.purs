@@ -50,9 +50,9 @@ start env state = do
       case getNewId lastSendedId ids of
         Just newId -> do
           let urls = makeVideoUrl newId
-          _ <- catchError
-                (env.sendVideo { chat: "-1001130908027", url: urls.video, caption: notNull "#котэ вам в ленту" })
-                (\_ -> env.sendVideo { chat: "-1001130908027", url: urls.gif, caption: notNull "#котэ вам в ленту" })
+          let sendCatVideo url =
+                env.sendVideo { chat: "-1001130908027", url: url, caption: notNull "время постить #котиков" }
+          _ <- catchError (sendCatVideo urls.video) (\_ -> sendCatVideo urls.gif)
           pure $ state { loaded = Just newId }
         Nothing -> pure state
 
