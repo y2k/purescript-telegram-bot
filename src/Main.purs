@@ -70,6 +70,9 @@ main = do
   startBotRepl bot (\msg -> launchAff_ $ do
     apiKey <- liftEffect getApiKey
     nowTime <- liftEffect nowDateTime
+
+    log $ "[LOG] Message from: " <> (show msg.from.id) <> ", text = " <> (show msg.text)
+
     D.update
       { token: apiKey
       , delay: delay
