@@ -29,7 +29,7 @@ foreign import sendVideo :: Bot -> String -> Nullable Int -> String -> Nullable 
 foreign import sendMessage :: { chatId :: String, text :: String } -> Bot -> Effect (Promise Void)
 foreign import deleteMessage :: Bot -> { chatId :: String, messageId :: Int } -> Effect Void
 foreign import createBot :: Effect Bot
-foreign import startBotRepl :: Bot -> ({ from :: { id :: Int }, chat :: Nullable { id :: String }, text :: Nullable String, message_id :: Nullable Int, new_chat_member :: Nullable { username :: Nullable String, first_name :: String }, data :: Nullable String, message :: Nullable { message_id :: Int, chat :: { id :: String }, from :: { id :: Int } } } -> Effect Unit) -> Effect Unit
+foreign import startBotRepl :: Bot -> ({ from :: { id :: Int, first_name :: String }, chat :: Nullable { id :: String }, text :: Nullable String, message_id :: Nullable Int, new_chat_member :: Nullable { username :: Nullable String, first_name :: String }, data :: Nullable String, message :: Nullable { message_id :: Int, chat :: { id :: String }, from :: { id :: Int } } } -> Effect Unit) -> Effect Unit
 
 download format url =
   let r = AX.defaultRequest { url = url, method = Left GET, responseFormat = format } # AX.request in
@@ -71,7 +71,7 @@ main = do
     apiKey <- liftEffect getApiKey
     nowTime <- liftEffect nowDateTime
 
-    log $ "[LOG] Message from: " <> (show msg.from.id) <> ", text = " <> (show msg.text)
+    log $ "[LOG] Message from: " <> msg.from.first_name <> " (" <> (show msg.from.id) <> "), text = " <> (show msg.text)
 
     D.update
       { token: apiKey
