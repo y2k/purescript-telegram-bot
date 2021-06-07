@@ -1,7 +1,8 @@
 {
   "scripts": {
     "build": "spago build",
-    "start": "export NTBA_FIX_319=1 && spago run"
+    "start": "export NTBA_FIX_319=1 && spago run",
+    "test": "export NTBA_FIX_319=1 && spago test"
   },
   "dependencies": {
     "node-telegram-bot-api": "^0.50.0",
