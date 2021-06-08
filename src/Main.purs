@@ -19,10 +19,11 @@ import Effect.Exception (throw)
 import Effect.Now (nowDateTime)
 import PeriodicPostsImages as PI
 
-foreign import data Bot :: Type
-foreign import unsafeToJson :: forall a. a -> Effect String
+foreign import unsafeToJson :: ∀ a. a -> Effect String
 foreign import unsafeParseJson :: String -> Effect _
 foreign import getApiKey :: Effect String
+
+foreign import data Bot :: Type
 foreign import editMessageReplyMarkup :: Bot -> String -> Int -> Array { text :: String, callback_data :: String } -> Effect Void
 foreign import editMessageMedia :: Bot -> String -> Int -> String -> Array { text :: String, callback_data :: String } -> Effect Void
 foreign import sendVideo :: Bot -> String -> Nullable Int -> String -> Nullable String -> Array { text :: String, callback_data :: String } -> Effect (Promise { message_id :: Int })
@@ -30,10 +31,11 @@ foreign import sendMessage :: { chatId :: String, text :: String } -> Bot -> Eff
 foreign import deleteMessage :: Bot -> { chatId :: String, messageId :: Int } -> Effect Void
 foreign import createBot :: Effect Bot
 foreign import startBotRepl :: Bot -> ({ from :: { id :: Int, first_name :: String }, chat :: Nullable { id :: String, type :: String }, text :: Nullable String, message_id :: Nullable Int, new_chat_member :: Nullable { username :: Nullable String, first_name :: String }, data :: Nullable String, message :: Nullable { message_id :: Int, chat :: { id :: String }, from :: { id :: Int } } } -> Effect Unit) -> Effect Unit
+
 foreign import data Var :: Type -> Type
-foreign import makeVar :: forall a. a -> Effect (Var a)
-foreign import setVar :: forall a. Var a -> a -> Effect Unit
-foreign import getVar :: forall a. Var a -> Effect a
+foreign import makeVar :: ∀ a. a -> Effect (Var a)
+foreign import setVar :: ∀ a. Var a -> a -> Effect Unit
+foreign import getVar :: ∀ a. Var a -> Effect a
 
 download format url =
   let r = AX.defaultRequest { url = url, method = Left GET, responseFormat = format } # AX.request in
