@@ -14,6 +14,7 @@ You can edit this file as you like.
   , "effect"
   , "now"
   , "numbers"
+  , "ordered-collections"
   , "psci-support"
   , "refs"
   , "strings"

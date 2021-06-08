@@ -6,12 +6,26 @@ import Common as C
 import Data.Argonaut (Json, decodeJson)
 import Data.Either (Either(..))
 import Data.Int (toNumber)
-import Data.Maybe (Maybe(..))
+import Data.Map as Map
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (toMaybe, notNull, null)
-import Data.Time.Duration (Seconds(..), fromDuration)
+import Data.Time.Duration (Milliseconds, Seconds(..), fromDuration, negateDuration)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested (tuple3)
 import Effect.Aff (Aff)
+
+restrictAccess :: Milliseconds -> _ -> _ -> _
+restrictAccess now state msg =
+  let duration = now <> (negateDuration state.lastResetTime) in
+  if (fromDuration $ Seconds 3600.0) > duration
+    then { lastResetTime : now, users : Map.empty}
+    else
+      let from = msg.from.id :: Int in
+      let isSupergroup = msg.chat.type == "supergroup" in
+      let counts = Map.lookup from state.users # fromMaybe 0 in
+      if counts > 3
+        then state
+        else state { users = Map.insert from (counts + 1) state.users }
 
 update :: _ -> _ -> Aff Unit
 update env msg =

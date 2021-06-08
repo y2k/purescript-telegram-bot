@@ -2,6 +2,10 @@
 
 const TelegramBot = require('node-telegram-bot-api');
 
+exports.makeVar = x => () => ({ value: x })
+exports.setVar = ref => x => () => { ref.value = x }
+exports.getVar = x => () => x.value
+
 exports.unsafeToJson = x => () => JSON.stringify(x)
 exports.unsafeParseJson = json => () => JSON.parse(json)
 exports.editMessageReplyMarkup = bot => chatId => msgId => buttons => () => {
@@ -35,6 +39,7 @@ exports.createBot = () => new TelegramBot(process.env.TELEGRAM_TOKEN, { polling:
 exports.startBotRepl = bot => f => () => {
   function update(msg) {
     try {
+      console.log(msg)
       f(msg)()
     } catch (e) {
       console.log(e)
