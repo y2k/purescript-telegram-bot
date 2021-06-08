@@ -22,6 +22,13 @@
 			"problemMatcher": [],
 			"label": "npm: test",
 			"detail": "export NTBA_FIX_319=1 && spago test"
+		},
+		{
+			"type": "npm",
+			"script": "start",
+			"problemMatcher": [],
+			"label": "npm: start",
+			"detail": "export NTBA_FIX_319=1 && spago run"
 		}
 	]
 }

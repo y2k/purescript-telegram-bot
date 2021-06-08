@@ -35,6 +35,16 @@ exports.sendVideo = bot => chatId => replyMsg => video => caption => buttons => 
     reply_markup: { inline_keyboard: [buttons] }
   });
 exports.sendMessage = x => bot => () => bot.sendMessage(x.chatId, x.text);
+/**
+ * @param {TelegramBot} bot
+ */
+exports.sendMessage2 = bot => x => () => bot.sendMessage(
+  x.chatId,
+  x.text,
+  {
+    disable_notification: true,
+    reply_to_message_id: x.reply_message_id
+  });
 exports.createBot = () => new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 exports.startBotRepl = bot => f => () => {
   function update(msg) {

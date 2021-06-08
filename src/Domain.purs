@@ -9,7 +9,8 @@ import Data.Either (Either(..))
 import Data.Int (toNumber)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Nullable (toMaybe, notNull, null)
+import Data.Nullable (notNull, null, toMaybe)
+import Data.Nullable as Nullable
 import Data.Time.Duration (Seconds(..), fromDuration)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested (tuple2, tuple3)
@@ -20,18 +21,31 @@ type State = { lastResetTime ∷ DateTime , users ∷ Map.Map Int Int }
 makeEmptyState :: State
 makeEmptyState = { lastResetTime : bottom, users : Map.empty }
 
-restrictAccess :: DateTime -> State -> _ -> _
-restrictAccess now state msg =
+limitCount = 2
+limitPerSedonds = Seconds 15.0
+
+restrictAccess :: _ -> State -> _ -> _
+restrictAccess env state msg =
+  let now = env.now in
+  let updateState = env.updateState in
   let duration = diff now state.lastResetTime in
-  if (fromDuration $ Seconds 3600.0) > duration
-    then tuple2 { lastResetTime : now, users : Map.empty} false
+  let reply = env.reply in
+  let userId = msg.from.id :: Int in
+  if duration > limitPerSedonds
+    then tuple2 [ updateState { lastResetTime : now, users : Map.singleton userId 1 } ] true
     else
-      let userId = msg.from.id :: Int in
-      let isSupergroup = msg.chat.type == "supergroup" in
-      let counts = Map.lookup userId state.users # fromMaybe 0 in
-      if counts > 3
-        then tuple2 state false
-        else tuple2 (state { users = Map.insert userId (counts + 1) state.users }) false
+      let chatType =
+            msg.chat
+            # Nullable.toMaybe
+            # map (\chat -> chat.type) in
+      case C.tryExtractCommand msg of
+        Nothing -> tuple2 [] true
+        Just _ ->
+          let isSupergroup = chatType == (pure "supergroup") in
+          let counts = Map.lookup userId state.users # fromMaybe 0 in
+          if counts >= limitCount
+            then tuple2 [ reply $ "Хватить абьюзить бота (лимит: " <> (show limitCount) <> " картинки в " <> (show limitPerSedonds) <> ")" ] false
+            else tuple2 [ updateState (state { users = Map.insert userId (counts + 1) state.users }) ] true
 
 update :: _ -> _ -> Aff Unit
 update env msg =
