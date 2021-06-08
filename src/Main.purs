@@ -10,6 +10,8 @@ import Data.Either (Either(..), either)
 import Data.HTTP.Method (Method(..))
 import Data.Nullable (Nullable, null)
 import Data.Time.Duration (Minutes(..), fromDuration)
+import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested (T3, Tuple2)
 import Domain as D
 import Effect (Effect)
 import Effect.Aff (delay, launchAff_)
@@ -68,6 +70,14 @@ periodicPostsImages bot = do
         delay $ fromDuration $ Minutes 15.0
         loop
   loop
+
+handleAccess msg next = do
+  state <- makeVar D.makeEmptyState
+  now <- nowDateTime
+  currentState <- getVar state
+  let (Tuple newState (Tuple allowNext _)) = D.restrictAccess now currentState msg
+  setVar state newState
+  ?TODO allowNext
 
 main :: Effect Unit
 main = do

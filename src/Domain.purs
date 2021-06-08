@@ -1,31 +1,37 @@
-module Domain (update) where
+module Domain (update, restrictAccess, makeEmptyState) where
 
 import Prelude
 
 import Common as C
 import Data.Argonaut (Json, decodeJson)
+import Data.DateTime (DateTime, diff)
 import Data.Either (Either(..))
 import Data.Int (toNumber)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (toMaybe, notNull, null)
-import Data.Time.Duration (Milliseconds, Seconds(..), fromDuration, negateDuration)
+import Data.Time.Duration (Seconds(..), fromDuration)
 import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested (tuple3)
+import Data.Tuple.Nested (tuple2, tuple3)
 import Effect.Aff (Aff)
 
-restrictAccess :: Milliseconds -> _ -> _ -> _
+type State = { lastResetTime ∷ DateTime , users ∷ Map.Map Int Int }
+
+makeEmptyState :: State
+makeEmptyState = { lastResetTime : bottom, users : Map.empty }
+
+restrictAccess :: DateTime -> State -> _ -> _
 restrictAccess now state msg =
-  let duration = now <> (negateDuration state.lastResetTime) in
+  let duration = diff now state.lastResetTime in
   if (fromDuration $ Seconds 3600.0) > duration
-    then { lastResetTime : now, users : Map.empty}
+    then tuple2 { lastResetTime : now, users : Map.empty} false
     else
-      let from = msg.from.id :: Int in
+      let userId = msg.from.id :: Int in
       let isSupergroup = msg.chat.type == "supergroup" in
-      let counts = Map.lookup from state.users # fromMaybe 0 in
+      let counts = Map.lookup userId state.users # fromMaybe 0 in
       if counts > 3
-        then state
-        else state { users = Map.insert from (counts + 1) state.users }
+        then tuple2 state false
+        else tuple2 (state { users = Map.insert userId (counts + 1) state.users }) false
 
 update :: _ -> _ -> Aff Unit
 update env msg =
