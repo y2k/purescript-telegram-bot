@@ -4,4 +4,4 @@ services:
 script:
   - docker build -t y2khub/relaxcats_bot .
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - docker push
+  - docker push y2khub/relaxcats_bot
