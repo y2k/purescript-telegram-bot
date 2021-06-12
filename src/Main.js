@@ -8,6 +8,9 @@ exports.getVar = x => () => x.value
 
 exports.unsafeToJson = x => () => JSON.stringify(x)
 exports.unsafeParseJson = json => () => JSON.parse(json)
+/**
+ *  @param {TelegramBot} bot
+ */
 exports.editMessageReplyMarkup = bot => chatId => msgId => buttons => () => {
   bot.editMessageReplyMarkup({
     inline_keyboard: [buttons]
@@ -16,6 +19,9 @@ exports.editMessageReplyMarkup = bot => chatId => msgId => buttons => () => {
     message_id: msgId,
   })
 }
+/**
+ *  @param {TelegramBot} bot
+ */
 exports.editMessageMedia = bot => chatId => msgId => url => buttons => () => {
   bot.editMessageMedia({
     media: url,
@@ -27,7 +33,13 @@ exports.editMessageMedia = bot => chatId => msgId => url => buttons => () => {
   })
 }
 exports.getApiKey = () => process.env.GIPHY_API_KEY
+/**
+ *  @param {TelegramBot} bot
+ */
 exports.deleteMessage = bot => x => () => bot.deleteMessage(x.chatId, x.messageId)
+/**
+ *  @param {TelegramBot} bot
+ */
 exports.sendVideo = bot => chatId => replyMsg => video => caption => buttons => () =>
   bot.sendVideo(chatId, video, {
     caption: caption,
@@ -46,6 +58,9 @@ exports.sendMessage2 = bot => x => () => bot.sendMessage(
     reply_to_message_id: x.reply_message_id
   });
 exports.createBot = () => new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
+/**
+ *  @param {TelegramBot} bot
+ */
 exports.startBotRepl = bot => f => () => {
   function update(msg) {
     try {
