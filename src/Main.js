@@ -49,7 +49,6 @@ exports.createBot = () => new TelegramBot(process.env.TELEGRAM_TOKEN, { polling:
 exports.startBotRepl = bot => f => () => {
   function update(msg) {
     try {
-      console.log(msg)
       f(msg)()
     } catch (e) {
       console.log(e)

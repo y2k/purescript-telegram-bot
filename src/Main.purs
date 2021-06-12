@@ -98,7 +98,7 @@ makeAccessDecorate bot =
         currentState <- getVar state
 
         let duration = diff now currentState.lastResetTime :: Seconds
-        log $ "[LOG] duration = " <> (show duration) <> ", current state" <> (show currentState)
+        log $ "[LOG] duration = " <> (show duration) <> ", current state " <> (show currentState)
 
         let (Tuple effs (Tuple allowNext _)) =
               D.restrictAccess
