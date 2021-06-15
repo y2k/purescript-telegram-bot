@@ -12,6 +12,7 @@ FROM node:14.5.0-alpine3.11
 WORKDIR /app
 COPY --from=0 /app/index.js .
 COPY --from=0 /app/package.json .
+COPY --from=0 /app/yarn.lock .
 RUN yarn --production
 
 ENV export NTBA_FIX_319=1
