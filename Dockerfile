@@ -1,19 +1,24 @@
 FROM node:14.5.0-stretch
 
-WORKDIR /app
-COPY . /app
-
 RUN npm install -g --unsafe-perm purescript@0.13.8
 RUN npm install -g --unsafe-perm spago@0.15.3
-RUN yarn && spago test && spago bundle-app
+
+WORKDIR /app
+
+COPY package.json yarn.lock /app/
+RUN yarn
+
+COPY . /app
+RUN spago test && spago bundle-app
 
 FROM node:14.5.0-alpine3.11
 
 WORKDIR /app
-COPY --from=0 /app/index.js .
-COPY --from=0 /app/package.json .
-COPY --from=0 /app/yarn.lock .
+
+COPY --from=0 /app/package.json /app/yarn.lock ./
 RUN yarn --production
+
+COPY --from=0 /app/index.js .
 
 ENV export NTBA_FIX_319=1
 
