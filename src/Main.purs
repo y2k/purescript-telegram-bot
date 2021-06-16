@@ -129,6 +129,6 @@ main :: Effect Unit
 main = do
   bot <- createBot
   launchAff_ $ periodicPostsImages bot
-  accessDecorate' <- makeAccessDecorate bot
-  startBotRepl bot (logDecorate (accessDecorate' (handleMessage bot)))
+  accessDecorate <- makeAccessDecorate bot
+  startBotRepl bot (logDecorate (accessDecorate (handleMessage bot)))
   log $ "Bot started..."
