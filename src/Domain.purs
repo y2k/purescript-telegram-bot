@@ -26,13 +26,9 @@ limitPerSedonds = Seconds 15.0
 
 restrictAccess :: _ -> State -> _ -> _
 restrictAccess env state msg =
-  let now = env.now in
-  let updateState = env.updateState in
-  let duration = diff now state.lastResetTime in
-  let reply = env.reply in
   let userId = msg.from.id :: Int in
-  if duration > limitPerSedonds
-    then tuple2 [ updateState { lastResetTime : now, users : Map.singleton userId 1 } ] true
+  if diff env.now state.lastResetTime > limitPerSedonds
+    then tuple2 [ env.updateState { lastResetTime : env.now, users : Map.singleton userId 1 } ] true
     else
       let chatType =
             msg.chat
@@ -44,8 +40,8 @@ restrictAccess env state msg =
           let isSupergroup = chatType == (pure "supergroup") in
           let counts = Map.lookup userId state.users # fromMaybe 0 in
           if counts >= limitCount
-            then tuple2 [ reply $ "Хватить абьюзить бота (лимит: " <> (show limitCount) <> " картинки в " <> (show limitPerSedonds) <> ")" ] false
-            else tuple2 [ updateState (state { users = Map.insert userId (counts + 1) state.users }) ] true
+            then tuple2 [ env.reply $ "Хватить абьюзить бота (лимит: " <> (show limitCount) <> " картинки в " <> (show limitPerSedonds) <> ")" ] false
+            else tuple2 [ env.updateState (state { users = Map.insert userId (counts + 1) state.users }) ] true
 
 update :: _ -> _ -> Aff Unit
 update env msg =
