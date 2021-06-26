@@ -64,8 +64,9 @@ update env msg =
 
 handleCommand env msg text =
   case text of
-    "/cat" -> sendVideo env msg "cat"
-    "/dog" -> sendVideo env msg "puppy"
+    [ "/cat" ] -> sendVideo env msg "cat"
+    [ "/dog" ] -> sendVideo env msg "puppy"
+    [ "/test", _ ] -> sendVideo env msg "puppy"
     _ -> pure unit
 
 handleLogin env chat message_id newChatMember = do

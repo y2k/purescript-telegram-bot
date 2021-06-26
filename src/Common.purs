@@ -2,6 +2,7 @@ module Common where
 
 import Prelude
 
+import Data.Array (concat, drop)
 import Data.Array as A
 import Data.Array.NonEmpty (head, toArray)
 import Data.DateTime (diff, DateTime)
@@ -11,18 +12,23 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (unwrap)
 import Data.Nullable (toMaybe)
 import Data.Number (fromString) as N
+import Data.String (Pattern(..), split)
 import Data.String as S
 import Data.String.Regex (match)
+import Data.String.Regex as R
 import Data.String.Regex.Flags (noFlags)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Time.Duration (Milliseconds(..))
-import Data.String.Regex as R
 
 toIntOrZero x = fromString x # maybe 0 identity
 
 tryExtractCommand msg =
   case toMaybe msg.text of
-    Just text -> match (unsafeRegex "/[^@]+" noFlags) text >>= head
+    Just text ->
+      let ps = split (Pattern " ") text # drop 1 in
+      match (unsafeRegex "/([^@]+).*?" noFlags) text
+      >>= head
+      <#> (\cmd -> concat [ [cmd], ps ])
     Nothing -> Nothing
 
 serializeDateTime d = d # fromDateTime # unInstant # unwrap # show
