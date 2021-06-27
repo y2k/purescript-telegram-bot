@@ -5,10 +5,9 @@ import Prelude
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Main (unsafeParseJson, unsafeToJson)
+import TestUtils (runTest, unsafeParseJson, unsafeToJson)
 import Domain as D
 import TestUtils as T
-import TestUtils (runTest)
 import Test.Assert (assertEqual)
 
 main :: Effect Unit

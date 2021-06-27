@@ -1,35 +1,16 @@
-module Domain (update, restrictAccess) where
+module Domain (update) where
 
 import Prelude
 
 import Common as C
 import Control.Monad.Error.Class (try)
-import Data.DateTime (diff)
 import Data.Int (toNumber)
-import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (maybe)
 import Data.Nullable (null, toMaybe)
 import Data.Time.Duration (Seconds(..), fromDuration)
 import Data.Traversable (sequence)
-import Data.Tuple.Nested (tuple2)
 import Effect.Aff (Aff)
 import PureDomain as D
-
-restrictAccess :: _ -> D.State -> _ -> _
-restrictAccess env state msg =
-  let userId = msg.from.id :: Int in
-  if diff env.now state.lastResetTime > D.limitPerSedonds
-    then tuple2 [ env.updateState { lastResetTime : env.now, users : Map.singleton userId 1 } ] true
-    else
-      let chatType = msg.chat # toMaybe # map (\chat -> chat.type) in
-      case C.tryExtractCommand msg of
-        Nothing -> tuple2 [] true
-        Just _ ->
-          let isSupergroup = chatType == (pure "supergroup") in
-          let counts = Map.lookup userId state.users # fromMaybe 0 in
-          if counts >= D.limitCount
-            then tuple2 [ env.reply $ "Хватит абьюзить бота (лимит: " <> (show D.limitCount) <> " картинки в " <> (show D.limitPerSedonds) <> ")" ] false
-            else tuple2 [ env.updateState (state { users = Map.insert userId (counts + 1) state.users }) ] true
 
 update :: _ -> _ -> Aff Unit
 update env msg =

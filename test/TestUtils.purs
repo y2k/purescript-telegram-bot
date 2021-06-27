@@ -18,6 +18,8 @@ foreign import toArray :: ∀ a. Queue a -> Effect (Array a)
 
 foreign import unsafeReadTextFile :: String -> Effect String
 foreign import stringHashCode :: String -> Int
+foreign import unsafeToJson :: ∀ a. a -> Effect String
+foreign import unsafeParseJson :: String -> Effect _
 
 runTest name f = do
   C.log $ "== " <> name <> " =="

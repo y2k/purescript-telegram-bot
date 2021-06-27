@@ -9,7 +9,7 @@ COPY package.json yarn.lock /app/
 RUN yarn
 
 COPY spago.dhall packages.dhall ./
-COPY src/*.purs src/*.js src/
+COPY src/ src/
 COPY test/*.purs test/*.js test/
 COPY test/resources/*.xml test/resources/
 

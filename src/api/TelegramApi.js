@@ -2,12 +2,6 @@
 
 const TelegramBot = require('node-telegram-bot-api');
 
-exports.makeVar = x => () => ({ value: x })
-exports.setVar = ref => x => () => { ref.value = x }
-exports.getVar = x => () => x.value
-
-exports.unsafeToJson = x => () => JSON.stringify(x)
-exports.unsafeParseJson = json => () => JSON.parse(json)
 /**
  *  @param {TelegramBot} bot
  */
@@ -32,7 +26,6 @@ exports.editMessageMedia = bot => params => () => {
     reply_markup: { inline_keyboard: [params.keyboard] }
   })
 }
-exports.getApiKey = () => process.env.GIPHY_API_KEY
 /**
  *  @param {TelegramBot} bot
  */

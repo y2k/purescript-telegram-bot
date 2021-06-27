@@ -7,10 +7,9 @@ import Effect (Effect)
 import Effect.Aff as A
 import Effect.Class (liftEffect)
 import Effect.Exception (throw)
-import Main as M
 import PeriodicPostsImages as I
 import Test.Assert (assertEqual)
-import TestUtils (runTest)
+import TestUtils (runTest, unsafeToJson)
 import TestUtils as T
 
 main :: Effect Unit
@@ -26,7 +25,7 @@ main = do
     log <- T.newQueue
     let env =
           { downloadText: (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".1.xml")
-          , sendVideo: (\x -> (M.unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
+          , sendVideo: (\x -> (unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
     start <- I.mkStart
 
     _ <- A.launchAff_ $ start env
@@ -40,7 +39,7 @@ main = do
     log <- T.newQueue
     let env =
           { downloadText: (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".1.xml")
-          , sendVideo: (\x -> (M.unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
+          , sendVideo: (\x -> (unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
     start <- I.mkStart
 
     _ <- A.launchAff_ $ start env
@@ -55,7 +54,7 @@ main = do
     log <- T.newQueue
     let env =
           { downloadText: (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".1.xml")
-          , sendVideo: (\x -> (M.unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
+          , sendVideo: (\x -> (unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
     start <- I.mkStart
 
     T.reset log
@@ -67,14 +66,14 @@ main = do
     _ <- A.launchAff_ $ start $ env { downloadText = (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".2.xml") }
     logA <- T.toArray log
     assertEqual
-      { expected: [ """{"chat_id":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/mp4/-6086130.mp4","caption":"время постить #котиков","reply_to_message_id":null,"keyboard":[]}""" ]
+      { expected: [ """{"chat_id":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/mp4/-6086130.mp4","caption":"время постить #котиков #котик","reply_to_message_id":null,"keyboard":[]}""" ]
       , actual: logA }
 
   runTest "PeriodicPostsImages - send gif if no video" do
     log <- T.newQueue
     let env =
           { downloadText: (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".1.xml")
-          , sendVideo: (\x -> (M.unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
+          , sendVideo: (\x -> (unsafeToJson x >>= (\x -> T.push x log)) # liftEffect) }
     start <- I.mkStart
 
     T.reset log
@@ -86,8 +85,8 @@ main = do
       , sendVideo = (\x ->
         if contains (Pattern ".mp4") x.url
           then (throw "" # liftEffect)
-          else ((M.unsafeToJson x >>= (\serEff -> T.push serEff log)) # liftEffect)) }
+          else ((unsafeToJson x >>= (\serEff -> T.push serEff log)) # liftEffect)) }
     logA <- T.toArray log
     assertEqual
-      { expected: [ """{"chat_id":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/-6086130.gif","caption":"время постить #котиков","reply_to_message_id":null,"keyboard":[]}""" ]
+      { expected: [ """{"chat_id":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/-6086130.gif","caption":"время постить #котиков #котик","reply_to_message_id":null,"keyboard":[]}""" ]
       , actual: logA }

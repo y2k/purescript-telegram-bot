@@ -12,6 +12,7 @@ You can edit this file as you like.
   , "assert"
   , "console"
   , "effect"
+  , "node-process"
   , "now"
   , "numbers"
   , "ordered-collections"

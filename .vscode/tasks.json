@@ -13,7 +13,6 @@
 			},
 			"problemMatcher": [],
 			"label": "npm: build",
-			"detail": "spago build"
 		},
 		{
 			"type": "npm",
@@ -27,14 +26,15 @@
 			},
 			"problemMatcher": [],
 			"label": "npm: test",
-			"detail": "export NTBA_FIX_319=1 && spago test"
 		},
 		{
+			"dependsOn": [
+				"npm: test"
+			],
 			"type": "npm",
 			"script": "start",
 			"problemMatcher": [],
 			"label": "npm: start",
-			"detail": "export NTBA_FIX_319=1 && spago run"
 		}
 	]
 }

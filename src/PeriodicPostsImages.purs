@@ -1,8 +1,10 @@
-module PeriodicPostsImages (start, handleMessage, State, emptyState, mkStart) where
+module PeriodicPostsImages (start, handleMessage, State, emptyState, mkStart, runPeriodicPostsImages) where
 
 import Prelude
 
+import Affjax.ResponseFormat (string)
 import Common as C
+import Control.Promise (toAffE)
 import Data.Array as A
 import Data.Int (fromString)
 import Data.Maybe (Maybe(..))
@@ -11,6 +13,7 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.String.Regex.Flags as RF
 import Data.String.Regex.Unsafe as RU
+import Data.Time.Duration (Minutes(..), fromDuration)
 import Effect (Effect)
 import Effect.Aff (Aff, catchError)
 import Effect.Class (liftEffect)
@@ -54,7 +57,7 @@ start env state = do
                 env.sendVideo
                   { chat_id: "-1001130908027"
                   , url: url
-                  , caption: notNull "время постить #котиков"
+                  , caption: notNull "время постить #котиков #котик"
                   , reply_to_message_id: null
                   , keyboard: [] }
           _ <- catchError (sendCatVideo urls.video) (\_ -> sendCatVideo urls.gif)
@@ -71,5 +74,17 @@ makeVideoUrl id =
 
 parseGifIds :: String -> Array Int
 parseGifIds xml = C.matchAll videoRegex xml # A.mapMaybe fromString
+
+runPeriodicPostsImages :: _ -> _ -> _ -> Aff Unit
+runPeriodicPostsImages sendVideo download delay = do
+  start <- liftEffect $ mkStart
+  let env =
+        { downloadText: \x -> download string x.url
+        , sendVideo: \x -> (sendVideo x # toAffE) }
+  let loop = do
+        _ <- start env
+        _ <- delay $ fromDuration $ Minutes 15.0
+        loop
+  loop
 
 videoRegex = RU.unsafeRegex """"url": "http://img\d\.joyreactor\.cc/pics/post/full/.+?-(\d+).gif"""" RF.noFlags
