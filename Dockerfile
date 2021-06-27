@@ -8,7 +8,11 @@ WORKDIR /app
 COPY package.json yarn.lock /app/
 RUN yarn
 
-COPY . /app
+COPY spago.dhall packages.dhall ./
+COPY src/*.purs src/*.js src/
+COPY test/*.purs test/*.js test/
+COPY test/resources/*.xml test/resources/
+
 RUN spago test && spago bundle-app
 
 FROM node:14.5.0-alpine3.11
