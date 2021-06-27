@@ -31,11 +31,10 @@ foreign import data Bot :: Type
 foreign import editMessageReplyMarkup :: Bot -> String -> Int -> Array { text :: String, callback_data :: String } -> Effect Void
 foreign import editMessageMedia :: Bot -> String -> Int -> String -> Array { text :: String, callback_data :: String } -> Effect Void
 foreign import sendVideo :: Bot -> String -> Nullable Int -> String -> Nullable String -> Array { text :: String, callback_data :: String } -> Effect (Promise { message_id :: Int })
-foreign import sendMessage :: { chatId :: String, text :: String } -> Bot -> Effect (Promise Void)
-foreign import sendMessage2 :: Bot -> { chatId :: String, text :: String, reply_message_id :: Nullable Int } -> Effect Unit
+foreign import sendMessage :: Bot -> { chatId :: String, text :: String, reply_message_id :: Nullable Int } -> Effect (Promise { message_id :: Int })
 foreign import deleteMessage :: Bot -> { chatId :: String, messageId :: Int } -> Effect Void
 foreign import createBot :: Effect Bot
-foreign import startBotRepl :: Bot -> ({ from :: { id :: Int, first_name :: String }, chat :: Nullable { id :: String, type :: String }, text :: Nullable String, message_id :: Nullable Int, new_chat_member :: Nullable { username :: Nullable String, first_name :: String }, data :: Nullable String, message :: Nullable { message_id :: Int, chat :: { id :: String }, from :: { id :: Int } } } -> Effect Unit) -> Effect Unit
+foreign import startBotRepl :: Bot -> ({ from :: { id :: Int, first_name :: String }, chat :: Nullable { id :: String, type :: String }, text :: Nullable String, message_id :: Nullable Int, new_chat_member :: Nullable { username :: Nullable String, first_name :: String }, data :: Nullable String, message :: Nullable { message_id :: Int, chat :: { id :: String }, from :: { id :: Int } }, reply_to_message :: Nullable { from :: { id :: Int } } } -> Effect Unit) -> Effect Unit
 
 foreign import data Var :: Type -> Type
 foreign import makeVar :: ∀ a. a -> Effect (Var a)
@@ -52,6 +51,10 @@ downloadText = download ResponseFormat.string
 sendVideo' bot param = do
   msg <- toAffE $ sendVideo bot param.chat param.reply_message_id param.url param.caption param.keyboard
   pure msg.message_id
+
+sendMessage' bot param = do
+  msg <- toAffE $ sendMessage bot param
+  pure msg
 
 editVideo' bot p =
   editMessageMedia bot p.chat p.messageId p.url p.keyboard
@@ -89,7 +92,8 @@ handleMessage bot msg =
             { updateKeyboard: (updateKeyboard' bot)
             , editVideo: (editVideo' bot)
             , sendVideo: (sendVideo' bot)
-            , deleteMessage: (deleteMessage' bot) } }
+            , deleteMessage: (deleteMessage' bot)
+            , sendMessage: (sendMessage' bot) } }
         msg
 
 makeAccessDecorate bot =
@@ -98,17 +102,17 @@ makeAccessDecorate bot =
         currentState <- getVar state
 
         let duration = diff now currentState.lastResetTime :: Seconds
-        log $ "[LOG] duration = " <> (show duration) <> ", current state " <> (show currentState)
 
         let (Tuple effs (Tuple allowNext _)) =
               D.restrictAccess
-                { reply : (\text ->
-                    sendMessage2
-                      bot
-                      { chatId : msg.chat # toMaybe # map (\chat -> chat.id) # fromMaybe ""
-                      , text : text
-                      , reply_message_id : msg.message_id
-                      })
+                { reply : (\text -> do
+                    _ <- sendMessage
+                            bot
+                            { chatId : msg.chat # toMaybe # map (\chat -> chat.id) # fromMaybe ""
+                            , text : text
+                            , reply_message_id : msg.message_id
+                            }
+                    pure unit)
                 , now
                 , updateState : (setVar state) }
                 currentState

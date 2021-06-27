@@ -57,7 +57,8 @@ assertTelegram msgJson expectedResponses = do
             { sendVideo: \x -> (unsafeToJson x >>= (\x -> T.push ("sv:" <> x) log)) *> pure 42 # liftEffect
             , editVideo: \x -> (unsafeToJson x >>= (\x -> T.push ("ev:" <> x) log)) *> pure unit # liftEffect
             , updateKeyboard: \x -> (unsafeToJson x >>= (\x -> T.push ("uk:" <> x) log)) *> pure unit # liftEffect
-            , deleteMessage: \x -> (unsafeToJson x >>= (\x -> T.push ("dm:" <> x) log)) *> pure unit # liftEffect } }
+            , deleteMessage: \x -> (unsafeToJson x >>= (\x -> T.push ("dm:" <> x) log)) *> pure unit # liftEffect
+            , sendMessage: \x -> (unsafeToJson x >>= (\x -> T.push ("sm:" <> x) log)) *> pure { message_id : 42 } # liftEffect } }
 
   launchAff_ (D.update env msg)
 
