@@ -8,7 +8,7 @@ import Data.DateTime (diff)
 import Data.Int (toNumber)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
-import Data.Nullable (notNull, null, toMaybe)
+import Data.Nullable (null, toMaybe)
 import Data.Time.Duration (Seconds(..), fromDuration)
 import Data.Traversable (sequence)
 import Data.Tuple.Nested (tuple2)
@@ -74,16 +74,8 @@ updateHandleLogin env msg = do
   json <- D.makeUrl env.token "cat" # env.downloadJson
   info <- D.parseImageJson json # C.unwrapEither
 
-  let timeout = 30
-
-  response <-
-    env.telegram.sendVideo
-      { chat_id: chat.id
-      , reply_to_message_id: notNull message_id
-      , url: info.data.image_mp4_url
-      , caption: username <> ", докажите что вы человек.\nНапишите что происходит на картинке. У вас " <> (show timeout) <> " секунд 😸" # notNull
-      , keyboard: [] }
-  _ <- env.delay $ fromDuration $ Seconds $ toNumber timeout
+  response <- env.telegram.sendVideo $ D.makeCaptchaRequest chat message_id info username
+  _ <- env.delay $ fromDuration $ Seconds $ toNumber D.captchaTimeout
   _ <- env.telegram.deleteMessage { chat_id: chat.id, message_id: response.message_id }
   pure unit
 
@@ -102,12 +94,7 @@ getUserId env msg = do
 testMention env msg userId = do
   chat <- C.unwrapNullable msg.chat
   _ <- env.delay $ fromDuration $ Seconds 5.0
-  _ <- env.telegram.sendVideo
-        { chat_id: chat.id
-        , reply_to_message_id: null
-        , url: "https://i.giphy.com/media/fT3PPZwB2lZMk/giphy.gif"
-        , caption: notNull $ "Привет [user_name](tg://user?id=" <> userId <> "), оптишись плиз, была ли нотификация"
-        , keyboard: [] }
+  _ <- env.telegram.sendVideo $ D.makeMentionRequest chat userId
   pure unit
 
 sendVideo env msg tag = do

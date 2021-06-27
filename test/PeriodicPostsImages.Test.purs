@@ -79,8 +79,6 @@ main = do
 
     T.reset log
     _ <- A.launchAff_ $ start env
-    -- logA <- T.toArray log
-    -- assertEqual { expected: [], actual: logA }
 
     T.reset log
     _ <- A.launchAff_ $ start $ env
@@ -88,7 +86,7 @@ main = do
       , sendVideo = (\x ->
         if contains (Pattern ".mp4") x.url
           then (throw "" # liftEffect)
-          else ((M.unsafeToJson x >>= (\x -> T.push x log)) # liftEffect)) }
+          else ((M.unsafeToJson x >>= (\serEff -> T.push serEff log)) # liftEffect)) }
     logA <- T.toArray log
     assertEqual
       { expected: [ """{"chat_id":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/-6086130.gif","caption":"время постить #котиков","reply_to_message_id":null,"keyboard":[]}""" ]
