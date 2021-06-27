@@ -36,7 +36,7 @@ exports.getApiKey = () => process.env.GIPHY_API_KEY
 /**
  *  @param {TelegramBot} bot
  */
-exports.deleteMessage = bot => x => () => bot.deleteMessage(x.chatId, x.messageId)
+exports.deleteMessage = bot => x => () => bot.deleteMessage(x.chat_id, x.message_id)
 /**
  *  @param {TelegramBot} bot
  */

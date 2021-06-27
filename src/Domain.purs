@@ -84,7 +84,7 @@ updateHandleLogin env msg = do
       , caption: username <> ", докажите что вы человек.\nНапишите что происходит на картинке. У вас " <> (show timeout) <> " секунд 😸" # notNull
       , keyboard: [] }
   _ <- env.delay $ fromDuration $ Seconds $ toNumber timeout
-  _ <- env.telegram.deleteMessage { chat: chat.id, message_id: response.message_id }
+  _ <- env.telegram.deleteMessage { chat_id: chat.id, message_id: response.message_id }
   pure unit
 
 getUserId env msg = do
@@ -96,7 +96,7 @@ getUserId env msg = do
                 , text: "UserID: " <> (show userId)
                 , reply_message_id: null }
   _ <- env.delay $ fromDuration $ Seconds 5.0
-  _ <- env.telegram.deleteMessage { chat: chat.id, message_id: response.message_id }
+  _ <- env.telegram.deleteMessage { chat_id: chat.id, message_id: response.message_id }
   pure unit
 
 testMention env msg userId = do
