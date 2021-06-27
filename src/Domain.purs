@@ -64,10 +64,39 @@ update env msg =
 
 handleCommand env msg text =
   case text of
-    [ "/cat" ] -> sendVideo env msg "cat"
-    [ "/dog" ] -> sendVideo env msg "puppy"
-    [ "/test", _ ] -> sendVideo env msg "puppy"
+    [ "cat" ] -> sendVideo env msg "cat"
+    [ "dog" ] -> sendVideo env msg "puppy"
+    [ "test_get_user_id" ] -> getUserId env msg
+    [ "test_reply", userId ] -> testMention env msg userId
     _ -> pure unit
+
+getUserId env msg =
+  case toMaybe msg.chat of
+    Nothing -> pure unit
+    Just chat -> do
+      case toMaybe msg.reply_to_message of
+        Nothing -> pure unit
+        Just reply -> do
+          let userId = reply.from.id :: Int
+          response <- env.telegram.sendMessage
+                        { chatId: chat.id
+                        , text: "UserID: " <> (show userId)
+                        , reply_message_id: null }
+          _ <- env.delay $ fromDuration $ Seconds 5.0
+          _ <- env.telegram.deleteMessage { chat: chat.id, message_id: response.message_id }
+          pure unit
+
+testMention env msg userId =
+  case toMaybe msg.chat of
+    Nothing -> pure unit
+    Just chat -> do
+      _ <- env.telegram.sendVideo
+            { chat: chat.id
+            , reply_message_id: null
+            , url: "https://i.giphy.com/media/fT3PPZwB2lZMk/giphy.gif"
+            , caption: notNull $ "Привет [user_name](tg://user?id=" <> userId <> "), оптишись плиз, была ли нотификация"
+            , keyboard: [] }
+      pure unit
 
 handleLogin env chat message_id newChatMember = do
   let username =
@@ -107,10 +136,11 @@ handleReroll env tag message = do
 
 sendVideo env msg tag =
   case toMaybe msg.chat of
+    Nothing -> pure unit
     Just chat -> do
-      let url = makeUrl env.token tag
-      json <- env.downloadJson url
+      json <- env.downloadJson $ makeUrl env.token tag
       case parseImageJson json of
+        Left _ -> pure unit
         Right info -> do
           id <-
             env.telegram.sendVideo
@@ -121,8 +151,6 @@ sendVideo env msg tag =
               , keyboard: [ { callback_data: (C.packData' "reroll" tag), text: "🎲 🎲 🎲" } ] }
           _ <- env.delay $ fromDuration $ Seconds 15.0
           env.telegram.updateKeyboard { chat: chat.id, messageId: id, keyboard: [] }
-        Left _ -> pure unit
-    Nothing -> pure unit
 
 parseImageJson :: Json -> Either String { data :: { image_mp4_url :: String } }
 parseImageJson = decodeJson

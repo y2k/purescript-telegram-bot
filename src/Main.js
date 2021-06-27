@@ -44,13 +44,13 @@ exports.sendVideo = bot => chatId => replyMsg => video => caption => buttons => 
   bot.sendVideo(chatId, video, {
     caption: caption,
     reply_to_message_id: replyMsg,
+    parse_mode: 'Markdown',
     reply_markup: { inline_keyboard: [buttons] }
   });
-exports.sendMessage = x => bot => () => bot.sendMessage(x.chatId, x.text);
 /**
  * @param {TelegramBot} bot
  */
-exports.sendMessage2 = bot => x => () => bot.sendMessage(
+exports.sendMessage = bot => x => () => bot.sendMessage(
   x.chatId,
   x.text,
   {
@@ -64,6 +64,7 @@ exports.createBot = () => new TelegramBot(process.env.TELEGRAM_TOKEN, { polling:
 exports.startBotRepl = bot => f => () => {
   function update(msg) {
     try {
+      console.log(msg)
       f(msg)()
     } catch (e) {
       console.log(e)

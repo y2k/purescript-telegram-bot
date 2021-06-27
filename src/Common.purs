@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Array (concat, drop)
 import Data.Array as A
-import Data.Array.NonEmpty (head, toArray)
+import Data.Array.NonEmpty (index, toArray)
 import Data.DateTime (diff, DateTime)
 import Data.DateTime.Instant (fromDateTime, unInstant, toDateTime, instant)
 import Data.Int (fromString, toNumber)
@@ -22,14 +22,13 @@ import Data.Time.Duration (Milliseconds(..))
 
 toIntOrZero x = fromString x # maybe 0 identity
 
-tryExtractCommand msg =
-  case toMaybe msg.text of
-    Just text ->
-      let ps = split (Pattern " ") text # drop 1 in
-      match (unsafeRegex "/([^@]+).*?" noFlags) text
-      >>= head
-      <#> (\cmd -> concat [ [cmd], ps ])
-    Nothing -> Nothing
+tryExtractCommand msg = do
+  text <- toMaybe msg.text
+  let ps = split (Pattern " ") text # drop 1
+  pairs <- match (unsafeRegex "/([^@ ]+).*?" noFlags) text
+  optCmd <- index pairs 1
+  cmd <- optCmd
+  pure $ concat [ [cmd], ps ]
 
 serializeDateTime d = d # fromDateTime # unInstant # unwrap # show
 
