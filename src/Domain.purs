@@ -90,6 +90,7 @@ testMention env msg userId =
   case toMaybe msg.chat of
     Nothing -> pure unit
     Just chat -> do
+      _ <- env.delay $ fromDuration $ Seconds 5.0
       _ <- env.telegram.sendVideo
             { chat: chat.id
             , reply_message_id: null
