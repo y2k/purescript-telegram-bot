@@ -35,9 +35,22 @@ restrictAccess env state msg =
             else tuple2 [ env.updateState (state { users = Map.insert userId (counts + 1) state.users }) ] true
 
 update :: _ -> _ -> Aff Unit
-update env msg =
+update env msg = do
+  _ <- updateHandleCommand env msg
+  _ <- updateHandleReroll env msg
+  _ <- updateHandleLogin env msg
+  pure unit
+
+updateHandleCommand :: _ -> _ -> Aff Unit
+updateHandleCommand env msg =
   case C.tryExtractCommand msg of
+    Nothing -> pure unit
     Just text -> handleCommand env msg text
+
+updateHandleReroll :: _ -> _ -> Aff Unit
+updateHandleReroll env msg =
+  case C.tryExtractCommand msg of
+    Just text -> pure unit
     Nothing ->
       case toMaybe msg.message of
         Just message ->
@@ -47,6 +60,16 @@ update env msg =
               case C.unpackData' data' of
                 [ "reroll", tag ] -> handleReroll env tag message
                 _ -> pure unit
+        Nothing ->
+          pure unit
+
+updateHandleLogin :: _ -> _ -> Aff Unit
+updateHandleLogin env msg =
+  case C.tryExtractCommand msg of
+    Just text -> pure unit
+    Nothing ->
+      case toMaybe msg.message of
+        Just message -> pure unit
         Nothing ->
           case tuple3 (toMaybe msg.chat) (toMaybe msg.message_id) (toMaybe msg.new_chat_member) of
             Tuple (Just chat) (Tuple (Just message_id) (Tuple (Just newChatMember) unit)) ->
