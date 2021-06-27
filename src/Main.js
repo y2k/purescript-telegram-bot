@@ -45,7 +45,8 @@ exports.sendVideo = bot => chatId => replyMsg => video => caption => buttons => 
     caption: caption,
     reply_to_message_id: replyMsg,
     parse_mode: 'Markdown',
-    reply_markup: { inline_keyboard: [buttons] }
+    reply_markup: { inline_keyboard: [buttons] },
+    disable_notification: false
   });
 /**
  * @param {TelegramBot} bot
