@@ -51,11 +51,11 @@ update env msg =
       case toMaybe msg.message of
         Just message ->
           case toMaybe msg.data of
+            Nothing -> pure unit
             Just data' -> do
               case C.unpackData' data' of
                 [ "reroll", tag ] -> handleReroll env tag message
                 _ -> pure unit
-            Nothing -> pure unit
         Nothing ->
           case tuple3 (toMaybe msg.chat) (toMaybe msg.message_id) (toMaybe msg.new_chat_member) of
             Tuple (Just chat) (Tuple (Just message_id) (Tuple (Just newChatMember) unit)) ->
@@ -66,60 +66,53 @@ handleCommand env msg text =
   case text of
     [ "cat" ] -> sendVideo env msg "cat"
     [ "dog" ] -> sendVideo env msg "puppy"
-    [ "test_get_user_id" ] -> getUserId env msg
-    [ "test_reply", userId ] -> testMention env msg userId
+    [ "debug_get_user_id" ] -> getUserId env msg
+    [ "debug_reply", userId ] -> testMention env msg userId
     _ -> pure unit
 
-getUserId env msg =
-  case toMaybe msg.chat of
-    Nothing -> pure unit
-    Just chat -> do
-      case toMaybe msg.reply_to_message of
-        Nothing -> pure unit
-        Just reply -> do
-          let userId = reply.from.id :: Int
-          response <- env.telegram.sendMessage
-                        { chatId: chat.id
-                        , text: "UserID: " <> (show userId)
-                        , reply_message_id: null }
-          _ <- env.delay $ fromDuration $ Seconds 5.0
-          _ <- env.telegram.deleteMessage { chat: chat.id, message_id: response.message_id }
-          pure unit
+getUserId env msg = do
+  chat <- C.unwrapNullable msg.chat
+  reply <- C.unwrapNullable msg.reply_to_message
+  let userId = reply.from.id :: Int
+  response <- env.telegram.sendMessage
+                { chatId: chat.id
+                , text: "UserID: " <> (show userId)
+                , reply_message_id: null }
+  _ <- env.delay $ fromDuration $ Seconds 5.0
+  _ <- env.telegram.deleteMessage { chat: chat.id, message_id: response.message_id }
+  pure unit
 
-testMention env msg userId =
-  case toMaybe msg.chat of
-    Nothing -> pure unit
-    Just chat -> do
-      _ <- env.delay $ fromDuration $ Seconds 5.0
-      _ <- env.telegram.sendVideo
-            { chat: chat.id
-            , reply_message_id: null
-            , url: "https://i.giphy.com/media/fT3PPZwB2lZMk/giphy.gif"
-            , caption: notNull $ "Привет [user_name](tg://user?id=" <> userId <> "), оптишись плиз, была ли нотификация"
-            , keyboard: [] }
-      pure unit
+testMention env msg userId = do
+  chat <- C.unwrapNullable msg.chat
+  _ <- env.delay $ fromDuration $ Seconds 5.0
+  _ <- env.telegram.sendVideo
+        { chat_id: chat.id
+        , reply_to_message_id: null
+        , url: "https://i.giphy.com/media/fT3PPZwB2lZMk/giphy.gif"
+        , caption: notNull $ "Привет [user_name](tg://user?id=" <> userId <> "), оптишись плиз, была ли нотификация"
+        , keyboard: [] }
+  pure unit
 
 handleLogin env chat message_id newChatMember = do
   let username =
         case toMaybe newChatMember.username of
           Just username -> "@" <> username
           Nothing -> newChatMember.first_name
-  let tag = "cat"
-  let url = makeUrl env.token tag
+  let url = makeUrl env.token "cat"
   json <- env.downloadJson url
   case parseImageJson json of
     Right info -> do
       let timeout = 30
       let caption = username <> ", докажите что вы человек.\nНапишите что происходит на картинке. У вас " <> (show timeout) <> " секунд 😸"
-      videoMsgId <-
+      response <-
         env.telegram.sendVideo
-          { chat: chat.id
-          , reply_message_id: notNull message_id
+          { chat_id: chat.id
+          , reply_to_message_id: notNull message_id
           , url: info.data.image_mp4_url
           , caption: notNull caption
           , keyboard: [] }
       _ <- env.delay $ fromDuration $ Seconds $ toNumber timeout
-      _ <- env.telegram.deleteMessage { chat: chat.id, message_id: videoMsgId }
+      _ <- env.telegram.deleteMessage { chat: chat.id, message_id: response.message_id }
       pure unit
     Left _ -> pure unit
 
@@ -128,9 +121,9 @@ handleReroll env tag message = do
   json <- env.downloadJson url
   case parseImageJson json of
     Right info ->
-      env.telegram.editVideo
-        { chat: message.chat.id
-        , messageId: message.message_id
+      env.telegram.editMessageMedia
+        { chat_id: message.chat.id
+        , message_id: message.message_id
         , url: info.data.image_mp4_url
         , keyboard: [ { callback_data: (C.packData' "reroll" tag), text: "🎲 🎲 🎲" } ] }
     Left _ -> pure unit
@@ -143,15 +136,15 @@ sendVideo env msg tag =
       case parseImageJson json of
         Left _ -> pure unit
         Right info -> do
-          id <-
+          response <-
             env.telegram.sendVideo
-              { chat: chat.id
-              , reply_message_id: null
+              { chat_id: chat.id
+              , reply_to_message_id: null
               , url: info.data.image_mp4_url
               , caption: null
               , keyboard: [ { callback_data: (C.packData' "reroll" tag), text: "🎲 🎲 🎲" } ] }
           _ <- env.delay $ fromDuration $ Seconds 15.0
-          env.telegram.updateKeyboard { chat: chat.id, messageId: id, keyboard: [] }
+          env.telegram.editMessageReplyMarkup { chat_id: chat.id, message_id: response.message_id, keyboard: [] }
 
 parseImageJson :: Json -> Either String { data :: { image_mp4_url :: String } }
 parseImageJson = decodeJson

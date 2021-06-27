@@ -19,6 +19,15 @@ import Data.String.Regex as R
 import Data.String.Regex.Flags (noFlags)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Time.Duration (Milliseconds(..))
+import Effect.Class (liftEffect)
+import Effect.Exception (throw)
+
+unwrapNullable m = toMaybe m # unwrapMaybe
+
+unwrapMaybe m =
+  case m of
+    Just x -> pure x
+    Nothing -> throw "no value" # liftEffect
 
 toIntOrZero x = fromString x # maybe 0 identity
 

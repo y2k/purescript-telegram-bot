@@ -11,25 +11,25 @@ exports.unsafeParseJson = json => () => JSON.parse(json)
 /**
  *  @param {TelegramBot} bot
  */
-exports.editMessageReplyMarkup = bot => chatId => msgId => buttons => () => {
+exports.editMessageReplyMarkup = bot => params => () => {
   bot.editMessageReplyMarkup({
-    inline_keyboard: [buttons]
+    inline_keyboard: [params.keyboard]
   }, {
-    chat_id: chatId,
-    message_id: msgId,
+    chat_id: params.chat_id,
+    message_id: params.message_id,
   })
 }
 /**
  *  @param {TelegramBot} bot
  */
-exports.editMessageMedia = bot => chatId => msgId => url => buttons => () => {
+exports.editMessageMedia = bot => params => () => {
   bot.editMessageMedia({
-    media: url,
+    media: params.url,
     type: "video"
   }, {
-    chat_id: chatId,
-    message_id: msgId,
-    reply_markup: { inline_keyboard: [buttons] }
+    chat_id: params.chat_id,
+    message_id: params.message_id,
+    reply_markup: { inline_keyboard: [params.keyboard] }
   })
 }
 exports.getApiKey = () => process.env.GIPHY_API_KEY
@@ -40,12 +40,12 @@ exports.deleteMessage = bot => x => () => bot.deleteMessage(x.chatId, x.messageI
 /**
  *  @param {TelegramBot} bot
  */
-exports.sendVideo = bot => chatId => replyMsg => video => caption => buttons => () =>
-  bot.sendVideo(chatId, video, {
-    caption: caption,
-    reply_to_message_id: replyMsg,
+exports.sendVideo = bot => params => () =>
+  bot.sendVideo(params.chat_id, params.url, {
+    caption: params.caption,
+    reply_to_message_id: params.reply_to_message_id,
     parse_mode: 'Markdown',
-    reply_markup: { inline_keyboard: [buttons] },
+    reply_markup: { inline_keyboard: [params.keyboard] },
     disable_notification: false
   });
 /**
@@ -65,7 +65,6 @@ exports.createBot = () => new TelegramBot(process.env.TELEGRAM_TOKEN, { polling:
 exports.startBotRepl = bot => f => () => {
   function update(msg) {
     try {
-      console.log(msg)
       f(msg)()
     } catch (e) {
       console.log(e)

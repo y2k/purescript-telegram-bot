@@ -67,7 +67,7 @@ main = do
     _ <- A.launchAff_ $ start $ env { downloadText = (\x -> liftEffect $ T.unsafeReadTextFile $ "test/resources/" <> (show $ T.stringHashCode x.url) <> ".2.xml") }
     logA <- T.toArray log
     assertEqual
-      { expected: [ """{"chat":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/mp4/-6086130.mp4","caption":"время постить #котиков"}""" ]
+      { expected: [ """{"chat_id":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/mp4/-6086130.mp4","caption":"время постить #котиков","reply_to_message_id":null,"keyboard":[]}""" ]
       , actual: logA }
 
   runTest "PeriodicPostsImages - send gif if no video" do
@@ -91,5 +91,5 @@ main = do
           else ((M.unsafeToJson x >>= (\x -> T.push x log)) # liftEffect)) }
     logA <- T.toArray log
     assertEqual
-      { expected: [ """{"chat":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/-6086130.gif","caption":"время постить #котиков"}""" ]
+      { expected: [ """{"chat_id":"-1001130908027","url":"http://img0.joyreactor.cc/pics/post/-6086130.gif","caption":"время постить #котиков","reply_to_message_id":null,"keyboard":[]}""" ]
       , actual: logA }

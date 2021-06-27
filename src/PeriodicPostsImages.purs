@@ -6,7 +6,7 @@ import Common as C
 import Data.Array as A
 import Data.Int (fromString)
 import Data.Maybe (Maybe(..))
-import Data.Nullable (notNull)
+import Data.Nullable (notNull, null)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String.Regex.Flags as RF
@@ -51,7 +51,12 @@ start env state = do
         Just newId -> do
           let urls = makeVideoUrl newId
           let sendCatVideo url =
-                env.sendVideo { chat: "-1001130908027", url: url, caption: notNull "время постить #котиков" }
+                env.sendVideo
+                  { chat_id: "-1001130908027"
+                  , url: url
+                  , caption: notNull "время постить #котиков"
+                  , reply_to_message_id: null
+                  , keyboard: [] }
           _ <- catchError (sendCatVideo urls.video) (\_ -> sendCatVideo urls.gif)
           pure $ state { loaded = Just newId }
         Nothing -> pure state
