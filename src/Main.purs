@@ -15,6 +15,7 @@ import Data.Nullable (Nullable, toMaybe)
 import Data.Time.Duration (Minutes(..), Seconds, fromDuration)
 import Data.Tuple (Tuple(..))
 import Domain as D
+import PureDomain as PD
 import Effect (Effect)
 import Effect.Aff (delay, launchAff_, try)
 import Effect.Class (liftEffect)
@@ -120,7 +121,7 @@ makeAccessDecorate bot =
           then next msg
           else pure unit in
   do
-    state <- makeVar D.makeEmptyState
+    state <- makeVar PD.makeEmptyState
     pure $ accessDecorate state
 
 logDecorate next msg = do

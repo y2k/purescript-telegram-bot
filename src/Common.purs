@@ -7,6 +7,7 @@ import Data.Array as A
 import Data.Array.NonEmpty (index, toArray)
 import Data.DateTime (diff, DateTime)
 import Data.DateTime.Instant (fromDateTime, unInstant, toDateTime, instant)
+import Data.Either (Either(..))
 import Data.Int (fromString, toNumber)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (unwrap)
@@ -28,6 +29,11 @@ unwrapMaybe m =
   case m of
     Just x -> pure x
     Nothing -> throw "no value" # liftEffect
+
+unwrapEither m =
+  case m of
+    Right x -> pure x
+    Left e -> throw e # liftEffect
 
 toIntOrZero x = fromString x # maybe 0 identity
 
