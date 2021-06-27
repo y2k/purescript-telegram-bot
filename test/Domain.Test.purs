@@ -5,10 +5,10 @@ import Prelude
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import TestUtils (runTest, unsafeParseJson, unsafeToJson)
-import Domain as D
-import TestUtils as T
+import HandleMessageDecorator (handleUpdate)
 import Test.Assert (assertEqual)
+import TestUtils (runTest, unsafeParseJson, unsafeToJson)
+import TestUtils as T
 
 main :: Effect Unit
 main = do
@@ -45,6 +45,7 @@ main = do
       , "d:(Milliseconds 30000.0)"
       , "dm:{\"chat_id\":-1001130908027,\"message_id\":42}" ]
 
+assertTelegram :: String -> Array String -> Effect Unit
 assertTelegram msgJson expectedResponses = do
   log <- T.newQueue
   msg <- unsafeParseJson msgJson
@@ -57,9 +58,9 @@ assertTelegram msgJson expectedResponses = do
             , editMessageMedia: \x -> (unsafeToJson x >>= (\x -> T.push ("ev:" <> x) log)) *> pure unit # liftEffect
             , editMessageReplyMarkup: \x -> (unsafeToJson x >>= (\x -> T.push ("uk:" <> x) log)) *> pure unit # liftEffect
             , deleteMessage: \x -> (unsafeToJson x >>= (\x -> T.push ("dm:" <> x) log)) *> pure unit # liftEffect
-            , sendMessage: \x -> (unsafeToJson x >>= (\x -> T.push ("sm:" <> x) log)) *> pure { message_id : 42 } # liftEffect } }
+            , sendMessage: \x -> (unsafeToJson x >>= (\x -> T.push ("sm:" <> x) log)) *> pure { message_id : 42 } } }
 
-  launchAff_ (D.update env msg)
+  launchAff_ (handleUpdate env msg)
 
   logA <- T.toArray log
   assertEqual

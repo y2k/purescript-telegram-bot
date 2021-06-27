@@ -5,7 +5,7 @@ import Prelude
 import AccessDecorator (makeAccessDecorate)
 import Affjax (printError)
 import Affjax as AX
-import Common as C
+import Common (unwrapMaybe)
 import Data.Either (Either(..), either)
 import Data.HTTP.Method (Method(..))
 import Effect (Effect)
@@ -27,7 +27,7 @@ download format url =
 
 main :: Effect Unit
 main = do
-  apiKey <- lookupEnv "GIPHY_API_KEY" >>= C.unwrapMaybe
+  apiKey <- lookupEnv "GIPHY_API_KEY" >>= unwrapMaybe
   bot <- createBot
   let handleMessageDecorator = makeHandleMessageDecorator (sendMessage bot) (deleteMessage bot) (sendVideo bot) (editMessageMedia bot) (editMessageReplyMarkup bot) download delay apiKey nowDateTime
   launchAff_ $ runPeriodicPostsImages (sendVideo bot) download delay

@@ -6,15 +6,26 @@ import Affjax.ResponseFormat (json)
 import Control.Monad.Error.Class (try)
 import Control.Promise (toAffE)
 import Data.Either (Either(..))
-import Domain as D
+import Data.Traversable (sequence)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
+import LoginHandler (handleLogin)
+import PostGifHandler (handlePostGif)
+import RerollHandler (handleReroll)
+
+handleUpdate env msg =
+  [ handleReroll
+  , handleLogin
+  , handlePostGif
+  ]
+  <#> (\f -> f env msg)
+  <#> try # sequence # void
 
 makeHandleMessageDecorator sendMessage deleteMessage sendVideo editMessageMedia editMessageReplyMarkup download delay apiKey nowDateTime msg = launchAff_ $ do
   nowTime <- liftEffect nowDateTime
 
-  result <- D.update
+  result <- handleUpdate
               { token: apiKey
               , delay: delay
               , downloadJson: download json

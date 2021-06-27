@@ -27,16 +27,16 @@ import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
 
-newRef ∷ ∀ m a. MonadEffect m ⇒ a → m (Ref a)
+newRef ∷ ∀ m a. MonadEffect m => a -> m (Ref a)
 newRef = liftEffect <<< Ref.new
 
-readRef ∷ ∀ m a. MonadEffect m ⇒ Ref a → m a
+readRef ∷ ∀ m a. MonadEffect m => Ref a -> m a
 readRef = liftEffect <<< Ref.read
 
-writeRef ∷ ∀ m a. MonadEffect m ⇒ Ref a → a → m Unit
+writeRef ∷ ∀ m a. MonadEffect m => Ref a -> a -> m Unit
 writeRef r = liftEffect <<< flip Ref.write r
 
-modifyRef ∷ ∀ m a. MonadEffect m ⇒ Ref a → (a → a) → m a
+modifyRef ∷ ∀ m a. MonadEffect m => Ref a -> (a -> a) -> m a
 modifyRef r = liftEffect <<< flip Ref.modify r
 
 unwrapNullable m = toMaybe m # unwrapMaybe
