@@ -5,9 +5,10 @@ import Prelude
 import Data.Array (concat, drop)
 import Data.Array as A
 import Data.Array.NonEmpty (index, toArray)
-import Data.DateTime (diff, DateTime)
+import Data.DateTime (diff)
 import Data.DateTime.Instant (fromDateTime, unInstant, toDateTime, instant)
 import Data.Either (Either(..))
+import Data.Foldable (indexl)
 import Data.Int (fromString, toNumber)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (unwrap)
@@ -21,6 +22,7 @@ import Data.String.Regex.Flags (noFlags)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Time.Duration (Milliseconds(..))
 import Effect.Class (liftEffect)
+import Effect.Class.Console (error)
 import Effect.Exception (throw)
 
 unwrapNullable m = toMaybe m # unwrapMaybe
@@ -51,21 +53,17 @@ deserializeDateTime str = N.fromString str <#> Milliseconds >>= instant <#> toDa
 
 timeInRange to from maxDiff = diff to from < maxDiff
 
-packData :: String -> { id :: Int } -> String -> DateTime -> String
-packData cmd from tag now = "4|" <> cmd <> "|" <> (show from.id) <> "|" <> tag <> "|" <> (serializeDateTime now)
+require cond =
+  if cond then pure unit else error "asset failed"
 
-unpackData data' =
-  case A.uncons $ S.split (S.Pattern "|") data' of
-    Just { head: "4", tail } -> tail
-    _ -> []
+packData :: String -> String -> String
+packData cmd tag = "6|" <> cmd <> "|" <> tag
 
-packData' :: String -> String -> String
-packData' cmd tag = "5|" <> cmd <> "|" <> tag
-
-unpackData' data' =
-  case A.uncons $ S.split (S.Pattern "|") data' of
-    Just { head: "5", tail } -> tail
-    _ -> []
+unpackData text = do
+  m <- match (unsafeRegex "6\\|(.+?)\\|(.+)" noFlags) text
+  cmd <- indexl 1 m >>= identity
+  cmdArg <- indexl 2 m >>= identity
+  pure { cmd, cmdArg }
 
 millisecondsFromSeconds timeout = Milliseconds (1_000.0 * (toNumber timeout))
 
