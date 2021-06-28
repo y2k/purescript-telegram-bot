@@ -36,6 +36,13 @@ type BotMessage = { from :: { id :: Int, first_name :: String }, chat :: Nullabl
 
 type BotPart = ∀ m. MonadEffect m => BotMessage -> m (Maybe BotMessage)
 
+bindBotPart :: BotPart -> BotPart -> BotPart
+bindBotPart b1 b2 msg = do
+  r1 <- b1 msg
+  case r1 of
+    Nothing -> pure Nothing
+    Just msg2 -> b2 msg2
+
 newRef ∷ ∀ m a. MonadEffect m => a -> m (Ref a)
 newRef = liftEffect <<< Ref.new
 
