@@ -12,7 +12,7 @@ import Data.Foldable (indexl)
 import Data.Int (fromString, toNumber)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (unwrap)
-import Data.Nullable (toMaybe)
+import Data.Nullable (Nullable, toMaybe)
 import Data.Number (fromString) as N
 import Data.String (Pattern(..), split)
 import Data.String as S
@@ -26,6 +26,10 @@ import Effect.Class.Console (error)
 import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
+
+type BotMessage = { from :: { id :: Int, first_name :: String }, chat :: Nullable { id :: String, type :: String }, text :: Nullable String, message_id :: Nullable Int, new_chat_member :: Nullable { username :: Nullable String, first_name :: String }, data :: Nullable String, message :: Nullable { message_id :: Int, chat :: { id :: String }, from :: { id :: Int } }, reply_to_message :: Nullable { from :: { id :: Int } } }
+
+type BotPart = ∀ m. MonadEffect m => BotMessage -> m (Maybe BotMessage)
 
 newRef ∷ ∀ m a. MonadEffect m => a -> m (Ref a)
 newRef = liftEffect <<< Ref.new
