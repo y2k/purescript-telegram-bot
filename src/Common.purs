@@ -22,10 +22,15 @@ import Data.String.Regex.Flags (noFlags)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Time.Duration (Milliseconds(..))
 import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Class.Console (error)
+import Effect.Class.Console (error, log)
 import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
+import Global.Unsafe (unsafeStringify)
+
+logDecorate name f p = do
+  log $ "[LOG][CALL] " <> name <> ", with " <> (unsafeStringify p)
+  f p
 
 type BotMessage = { from :: { id :: Int, first_name :: String }, chat :: Nullable { id :: String, type :: String }, text :: Nullable String, message_id :: Nullable Int, new_chat_member :: Nullable { username :: Nullable String, first_name :: String }, data :: Nullable String, message :: Nullable { message_id :: Int, chat :: { id :: String }, from :: { id :: Int } }, reply_to_message :: Nullable { from :: { id :: Int } } }
 
