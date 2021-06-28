@@ -3,6 +3,7 @@ module HandleMessageDecorator where
 import Prelude
 
 import Affjax.ResponseFormat (json)
+import Common (logDecorate)
 import Control.Monad.Error.Class (try)
 import Control.Promise (toAffE)
 import Data.Either (Either(..))
@@ -30,11 +31,11 @@ makeHandleMessageDecorator sendMessage deleteMessage sendVideo editMessageMedia 
               , delay: delay
               , downloadJson: download json
               , telegram:
-                  { editMessageReplyMarkup: (\p -> editMessageReplyMarkup p *> pure unit # liftEffect)
-                  , editMessageMedia: (\p -> editMessageMedia p *> pure unit # liftEffect)
-                  , sendVideo: (\p -> sendVideo p # toAffE)
-                  , deleteMessage: (\p -> deleteMessage p *> pure unit # liftEffect)
-                  , sendMessage: (\p -> sendMessage p # toAffE) } }
+                  { editMessageReplyMarkup: logDecorate "editMessageReplyMarkup" (\p -> editMessageReplyMarkup p *> pure unit # liftEffect)
+                  , editMessageMedia: logDecorate "editMessageMedia" (\p -> editMessageMedia p *> pure unit # liftEffect)
+                  , sendVideo: logDecorate "sendVideo" (\p -> sendVideo p # toAffE)
+                  , deleteMessage: logDecorate "deleteMessage" (\p -> deleteMessage p *> pure unit # liftEffect)
+                  , sendMessage: logDecorate "sendMessage" (\p -> sendMessage p # toAffE) } }
               msg
             # try
   case result of

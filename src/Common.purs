@@ -22,10 +22,15 @@ import Data.String.Regex.Flags (noFlags)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Data.Time.Duration (Milliseconds(..))
 import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Class.Console (error)
+import Effect.Class.Console (error, log)
 import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
+import Global.Unsafe (unsafeStringify)
+
+logDecorate name f p = do
+  log $ "[LOG][CALL] " <> name <> ", with " <> (unsafeStringify p)
+  f p
 
 newRef ∷ ∀ m a. MonadEffect m => a -> m (Ref a)
 newRef = liftEffect <<< Ref.new
