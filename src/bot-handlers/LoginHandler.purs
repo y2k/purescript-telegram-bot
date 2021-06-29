@@ -2,9 +2,9 @@ module LoginHandler (handleLogin) where
 
 import Prelude
 
-import Common (BotMessage, unwrapEither, unwrapMaybe, unwrapNullable)
+import Common (BotMessage, chainMessage, unwrapEither, unwrapMaybe)
 import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (maybe)
 import Data.Nullable (notNull, toMaybe)
 import Data.Time.Duration (Seconds(..), fromDuration)
 import PureDomain as D
@@ -16,38 +16,26 @@ makeCaptchaRequest chat message_id info username =
   , caption: username <> ", докажите что вы человек.\nНапишите что происходит на картинке. У вас " <> (show D.captchaTimeout) <> " секунд 😸" # notNull
   , keyboard: [] }
 
-mapTo (msg :: BotMessage) = do
+extractModel (msg :: BotMessage) = do
   chat <- toMaybe msg.chat
   message_id <- toMaybe msg.message_id
   newChatMember <- toMaybe msg.new_chat_member
-  let username =
-        toMaybe newChatMember.username
-        # maybe newChatMember.first_name (\username -> "@" <> username)
+  let username = maybe newChatMember.first_name ((<>) "@") (toMaybe newChatMember.username)
   pure { chat, message_id, newChatMember, username }
 
-handleLogin2 env (msg :: BotMessage) = do
-  { chat, message_id, newChatMember, username } <- mapTo msg # unwrapMaybe
-
-  json <- D.makeUrl env.token "cat" # env.downloadJson
-  info <- D.parseImageJson json # unwrapEither
-
-  response <- env.telegram.sendVideo $ makeCaptchaRequest chat message_id info username
-  _ <- env.delay $ fromDuration $ Seconds $ toNumber D.captchaTimeout
-  _ <- env.telegram.deleteMessage { chat_id: chat.id, message_id: response.message_id }
-  pure $ Just msg
+handleLogin' env msg =
+  chainMessage msg extractModel \{ chat, message_id, newChatMember, username } -> do
+    json <- D.makeUrl env.token "cat" # env.downloadJson
+    info <- D.parseImageJson json # unwrapEither
+    telMessage <- env.telegram.sendVideo $ makeCaptchaRequest chat message_id info username
+    _ <- env.delay $ fromDuration $ Seconds $ toNumber D.captchaTimeout
+    env.telegram.deleteMessage { chat_id: chat.id, message_id: telMessage.message_id }
 
 handleLogin env msg = do
-  chat <- msg.chat # unwrapNullable
-  message_id <- msg.message_id # unwrapNullable
-  newChatMember <- msg.new_chat_member # unwrapNullable
-
-  let username =
-        toMaybe newChatMember.username
-        # maybe newChatMember.first_name (\username -> "@" <> username)
+  { chat, message_id, newChatMember, username } <- extractModel msg # unwrapMaybe
 
   json <- D.makeUrl env.token "cat" # env.downloadJson
   info <- D.parseImageJson json # unwrapEither
-
   response <- env.telegram.sendVideo $ makeCaptchaRequest chat message_id info username
   _ <- env.delay $ fromDuration $ Seconds $ toNumber D.captchaTimeout
   _ <- env.telegram.deleteMessage { chat_id: chat.id, message_id: response.message_id }

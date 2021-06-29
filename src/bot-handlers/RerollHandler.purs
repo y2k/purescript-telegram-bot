@@ -2,7 +2,9 @@ module RerollHandler (handleReroll) where
 
 import Prelude
 
-import Common (packData, require, unpackData, unwrapEither, unwrapMaybe, unwrapNullable)
+import Common (chainMessage, packData, unpackData, unwrapEither, unwrapMaybe)
+import Data.Maybe (Maybe(..))
+import Data.Nullable (toMaybe)
 import PureDomain as D
 
 makeRerollVideoRequest info tag message =
@@ -11,13 +13,23 @@ makeRerollVideoRequest info tag message =
   , url: (info.data.image_mp4_url :: String)
   , keyboard: [ { callback_data: (packData "reroll" tag), text: "🎲 🎲 🎲" } ] }
 
+mapToModel msg = do
+  message <- toMaybe msg.message
+  msgInfo <- toMaybe msg.data
+  { cmd, cmdArg } <- unpackData msgInfo
+  if cmd == "reroll"
+    then pure { message, msgInfo, cmdArg }
+    else Nothing
+
+handleReroll' env msg =
+  chainMessage msg mapToModel \{ message, msgInfo, cmdArg } -> do
+    json <- D.makeUrl env.token cmdArg # env.downloadJson
+    info <- D.parseImageJson json # unwrapEither
+    makeRerollVideoRequest info cmdArg message # env.telegram.editMessageMedia
+
 handleReroll env msg = do
-  message <- msg.message # unwrapNullable
-  msgInfo <- msg.data # unwrapNullable
-  { cmd, cmdArg } <- unpackData msgInfo # unwrapMaybe
-  require $ cmd == "reroll"
+  { message, msgInfo, cmdArg } <- mapToModel msg # unwrapMaybe
 
   json <- D.makeUrl env.token cmdArg # env.downloadJson
   info <- D.parseImageJson json # unwrapEither
-
   makeRerollVideoRequest info cmdArg message # env.telegram.editMessageMedia

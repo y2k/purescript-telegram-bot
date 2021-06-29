@@ -2,8 +2,9 @@ module PostGifHandler (handlePostGif) where
 
 import Prelude
 
-import Common (packData, tryExtractCommand, unwrapEither, unwrapMaybe, unwrapNullable)
-import Data.Nullable (null)
+import Common (chainMessage, packData, tryExtractCommand, unwrapEither, unwrapMaybe)
+import Data.Maybe (Maybe(..))
+import Data.Nullable (null, toMaybe)
 import Data.Time.Duration (Seconds(..), fromDuration)
 import PureDomain as D
 
@@ -14,19 +15,31 @@ sendVideoWithRerollKeyboard chat info tag =
   , caption: null
   , keyboard: [ { callback_data: (packData "reroll" tag), text: "🎲 🎲 🎲" } ] }
 
-handlePostGif env msg = do
-  let replyWithVideo = sendVideo env msg
-  text <- tryExtractCommand msg # unwrapMaybe
-  case text of
-    [ "cat" ] -> replyWithVideo "cat"
-    [ "dog" ] -> replyWithVideo "puppy"
-    _ -> pure unit
+mapToTag msg = do
+  text <- tryExtractCommand msg
+  chat <- toMaybe msg.chat
+  tag <-
+    case text of
+      [ "cat" ] -> Just "cat"
+      [ "dog" ] -> Just "puppy"
+      _ -> Nothing
+  pure { chat, tag }
 
-sendVideo env msg tag = do
-  chat <- unwrapNullable msg.chat
+handlePostGif' env msg =
+  chainMessage msg mapToTag \{ chat, tag } -> do
+    json <- D.makeUrl env.token tag # env.downloadJson
+    info <- D.parseImageJson json # unwrapEither
+    { message_id } <-
+      sendVideoWithRerollKeyboard chat info tag
+      # env.telegram.sendVideo
+    _ <- env.delay $ fromDuration $ Seconds 15.0
+    env.telegram.editMessageReplyMarkup { chat_id: chat.id, message_id, keyboard: [] }
+
+handlePostGif env msg = do
+  { chat, tag } <- mapToTag msg # unwrapMaybe
+
   json <- D.makeUrl env.token tag # env.downloadJson
   info <- D.parseImageJson json # unwrapEither
-
   { message_id } <-
     sendVideoWithRerollKeyboard chat info tag
     # env.telegram.sendVideo

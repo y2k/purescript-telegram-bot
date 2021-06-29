@@ -28,15 +28,22 @@ import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Global.Unsafe (unsafeStringify)
 
+chainMessage msg extract f =
+  case extract msg of
+    Nothing -> pure $ Just msg
+    Just r  -> do
+      _ <- f r
+      pure Nothing
+
 logDecorate name f p = do
   log $ "[LOG][CALL] " <> name <> ", with " <> (unsafeStringify p)
   f p
 
 type BotMessage = { from :: { id :: Int, first_name :: String }, chat :: Nullable { id :: String, type :: String }, text :: Nullable String, message_id :: Nullable Int, new_chat_member :: Nullable { username :: Nullable String, first_name :: String }, data :: Nullable String, message :: Nullable { message_id :: Int, chat :: { id :: String }, from :: { id :: Int } }, reply_to_message :: Nullable { from :: { id :: Int } } }
 
-type BotPart = ∀ m. MonadEffect m => BotMessage -> m (Maybe BotMessage)
+type BotPart m = ∀ m. MonadEffect m => BotMessage -> m (Maybe BotMessage)
 
-bindBotPart :: BotPart -> BotPart -> BotPart
+bindBotPart :: ∀ m. MonadEffect m => (BotMessage -> m (Maybe BotMessage)) -> (BotMessage -> m (Maybe BotMessage)) -> (BotMessage -> m (Maybe BotMessage))
 bindBotPart b1 b2 msg = do
   r1 <- b1 msg
   case r1 of
