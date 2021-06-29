@@ -3,11 +3,10 @@ module HandleMessageDecorator where
 import Prelude
 
 import Affjax.ResponseFormat (json)
-import Common (logDecorate)
+import Common (bindBotPart, logDecorate)
 import Control.Monad.Error.Class (try)
 import Control.Promise (toAffE)
 import Data.Either (Either(..))
-import Data.Traversable (sequence)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
@@ -16,16 +15,15 @@ import PostGifHandler (handlePostGif)
 import RerollHandler (handleReroll)
 
 handleUpdate env msg =
-  [ handleReroll
-  , handleLogin
-  , handlePostGif
-  ]
-  <#> (\f -> f env msg)
-  <#> try # sequence # void
+  let route = bindBotPart
+                (bindBotPart
+                  (handleReroll env)
+                  (handleLogin env))
+                (handlePostGif env) in
+  route msg # void
 
 makeHandleMessageDecorator sendMessage deleteMessage sendVideo editMessageMedia editMessageReplyMarkup download delay apiKey nowDateTime msg = launchAff_ $ do
   nowTime <- liftEffect nowDateTime
-
   result <- handleUpdate
               { token: apiKey
               , delay: delay

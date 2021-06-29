@@ -2,7 +2,7 @@ module RerollHandler (handleReroll) where
 
 import Prelude
 
-import Common (chainMessage, packData, unpackData, unwrapEither, unwrapMaybe)
+import Common (chainMessage, packData, unpackData, unwrapEither)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (toMaybe)
 import PureDomain as D
@@ -21,15 +21,8 @@ mapToModel msg = do
     then pure { message, msgInfo, cmdArg }
     else Nothing
 
-handleReroll' env msg =
+handleReroll env msg =
   chainMessage msg mapToModel \{ message, msgInfo, cmdArg } -> do
     json <- D.makeUrl env.token cmdArg # env.downloadJson
     info <- D.parseImageJson json # unwrapEither
     makeRerollVideoRequest info cmdArg message # env.telegram.editMessageMedia
-
-handleReroll env msg = do
-  { message, msgInfo, cmdArg } <- mapToModel msg # unwrapMaybe
-
-  json <- D.makeUrl env.token cmdArg # env.downloadJson
-  info <- D.parseImageJson json # unwrapEither
-  makeRerollVideoRequest info cmdArg message # env.telegram.editMessageMedia
