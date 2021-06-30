@@ -6,7 +6,7 @@ const TelegramBot = require('node-telegram-bot-api');
  *  @param {TelegramBot} bot
  */
 exports.editMessageReplyMarkup = bot => params => () => {
-  bot.editMessageReplyMarkup({
+  return bot.editMessageReplyMarkup({
     inline_keyboard: [params.keyboard]
   }, {
     chat_id: params.chat_id,
@@ -17,7 +17,7 @@ exports.editMessageReplyMarkup = bot => params => () => {
  *  @param {TelegramBot} bot
  */
 exports.editMessageMedia = bot => params => () => {
-  bot.editMessageMedia({
+  return bot.editMessageMedia({
     media: params.url,
     type: "video"
   }, {

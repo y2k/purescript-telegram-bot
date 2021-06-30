@@ -35,7 +35,7 @@ chainMessage msg extract f =
       _ <- f r
       pure Nothing
 
-logDecorate name f p = do
+logFunctionDecorate name f p = do
   log $ "[LOG][CALL] " <> name <> ", with " <> (unsafeStringify p)
   f p
 
