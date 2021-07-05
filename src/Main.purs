@@ -9,14 +9,15 @@ import Affjax.ResponseFormat (json)
 import Common (bindBotPart, logFunctionDecorate, unwrapMaybe)
 import Control.Promise (toAffE)
 import Data.Either (Either(..), either)
+import Data.Foldable (foldl)
 import Data.HTTP.Method (Method(..))
+import Data.Maybe (Maybe(..))
+import Data.Traversable (traverse)
 import Effect (Effect)
-import Effect.Aff (Aff, delay, launchAff_)
-import Effect.Class (class MonadEffect, liftEffect)
+import Effect.Aff (Aff, delay, forkAff, launchAff_)
+import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
 import Effect.Exception (throw)
-import Effect.Now (nowDateTime)
-import HandleMessageDecorator (makeHanleMessageUpdate)
 import LogDecorator (logDecorate)
 import LoginHandler (handleLogin)
 import Node.Process (lookupEnv)
@@ -30,66 +31,40 @@ download format url =
   # AX.request
   >>= (\x -> either (\e -> throw (printError e) # liftEffect) (\x -> pure x.body) x)
 
--- makeEnv bot apiKey =
---   { token: apiKey
---   , delay: delay
---   , downloadJson: download json
---   , telegram:
---       { editMessageReplyMarkup: logFunctionDecorate "editMessageReplyMarkup" (\p -> (editMessageReplyMarkup bot) p *> pure unit # liftEffect)
---       , editMessageMedia: logFunctionDecorate "editMessageMedia" (\p -> (editMessageMedia bot) p *> pure unit # liftEffect)
---       , sendVideo: logFunctionDecorate "sendVideo" (\p -> (sendVideo bot) p # toAffE)
---       , deleteMessage: logFunctionDecorate "deleteMessage" (\p -> (deleteMessage bot) p *> pure unit # liftEffect)
---       , sendMessage: logFunctionDecorate "sendMessage" (\p -> (sendMessage bot) p # toAffE)
---       }
---   }
+emptyDecorator msg = pure $ Just msg
 
--- makeHandleMessageDecorator sendMessage deleteMessage sendVideo editMessageMedia editMessageReplyMarkup download delay apiKey nowDateTime = do
-makeHandleBotMessage env = do
-  nowTime <- liftEffect nowDateTime
-  -- pure $ router env
-  -- pure makeHanleMessageUpdate
-  -- pure $ handleLogin env
-  -- pure $ (bindBotPart
-  --     (handleReroll env)
-  --     (handleLogin env))
-  pure $
-    bindBotPart
-      logDecorate
-      (bindBotPart
-        (bindBotPart
-          (handleReroll env)
-          (handleLogin env))
-        (handlePostGif env))
+handleUpdate accessDecorate env =
+  [ logDecorate
+  , accessDecorate
+  , (handlePostGif env)
+  , (handleReroll env)
+  , (handleLogin env)
+  ] # foldl bindBotPart emptyDecorator
 
--- main :: Effect Unit
--- main :: forall m. MonadEffect m => m Unit
-main :: Aff Unit
-main = do
+mainAsync :: Aff _
+mainAsync = do
   apiKey <- lookupEnv "GIPHY_API_KEY" # liftEffect >>= unwrapMaybe
   bot <- liftEffect createBot
-  -- let env = makeEnv bot apiKey
   let env = { token: apiKey
             , delay: delay
             , downloadJson: download json
             , telegram:
-                { editMessageReplyMarkup: logFunctionDecorate "editMessageReplyMarkup" (\p -> (editMessageReplyMarkup bot) p # toAffE)
-                , editMessageMedia: logFunctionDecorate "editMessageMedia" (\p -> (editMessageMedia bot) p # toAffE)
-                , sendVideo: logFunctionDecorate "sendVideo" (\p -> (sendVideo bot) p # toAffE)
-                , deleteMessage: logFunctionDecorate "deleteMessage" (\p -> (deleteMessage bot) p # toAffE)
-                , sendMessage: logFunctionDecorate "sendMessage" (\p -> (sendMessage bot) p # toAffE)
+                { editMessageReplyMarkup: logFunctionDecorate "editMessageReplyMarkup" (editMessageReplyMarkup bot >>> toAffE)
+                , editMessageMedia: logFunctionDecorate "editMessageMedia" (editMessageMedia bot >>> toAffE)
+                , sendVideo: logFunctionDecorate "sendVideo" (sendVideo bot >>> toAffE)
+                , deleteMessage: logFunctionDecorate "deleteMessage" (deleteMessage bot >>> toAffE)
+                , sendMessage: logFunctionDecorate "sendMessage" (sendMessage bot >>> toAffE)
                 }
             }
-  -- let handleMessageDecorator = makeHandleMessageDecorator (sendMessage bot) (deleteMessage bot) (sendVideo bot) (editMessageMedia bot) (editMessageReplyMarkup bot) download delay apiKey nowDateTime
-  -- let handleBotMessage = makeHandleBotMessage bot
-  -- launchAff_ $ runPeriodicPostsImages (sendVideo bot) download delay
-  -- accessDecorate <- makeAccessDecorate (sendMessage bot)
-  -- startBotRepl bot (logDecorate (accessDecorate handleMessageDecorator))
-  accessDecorate <- makeAccessDecorate (sendMessage bot)
 
-  handleBotMessage <- makeHandleBotMessage env
-  -- ?TODO handleBotMessage
+  accessDecorate <- makeAccessDecorate (sendMessage bot >>> liftEffect)
+  let handleBotMessage = handleUpdate accessDecorate env
 
-  -- let _ = ?TODO handleBotMessage
-
-  liftEffect $ startBotRepl bot (\msg -> handleBotMessage msg # launchAff_)
   log $ "Bot started..."
+
+  [ runPeriodicPostsImages env.telegram.sendVideo download delay
+  , liftEffect $ startBotRepl bot (handleBotMessage >>> launchAff_)
+  ] # traverse forkAff
+
+main :: Effect Unit
+main = launchAff_ mainAsync

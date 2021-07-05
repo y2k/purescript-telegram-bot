@@ -29,4 +29,5 @@ unsafeParse x = jsonParser x # unsafePartial fromRight
 
 pureA :: ∀ a. a -> Aff a
 pureA x = pure x
+
 notImpl = throw "not implemented" # liftEffect

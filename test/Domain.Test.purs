@@ -5,7 +5,7 @@ import Prelude
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import HandleMessageDecorator (handleUpdate)
+import Main (emptyDecorator, handleUpdate)
 import Test.Assert (assertEqual)
 import TestUtils (runTest, unsafeParseJson, unsafeToJson)
 import TestUtils as T
@@ -60,7 +60,7 @@ assertTelegram msgJson expectedResponses = do
             , deleteMessage: \x -> (unsafeToJson x >>= (\x -> T.push ("dm:" <> x) log)) *> pure unit # liftEffect
             , sendMessage: \x -> (unsafeToJson x >>= (\x -> T.push ("sm:" <> x) log)) *> pure { message_id : 42 } } }
 
-  launchAff_ (handleUpdate env msg)
+  launchAff_ (handleUpdate emptyDecorator env msg)
 
   logA <- T.toArray log
   assertEqual

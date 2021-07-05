@@ -1,10 +1,9 @@
-module PeriodicPostsImages (start, handleMessage, State, emptyState, mkStart, runPeriodicPostsImages) where
+module PeriodicPostsImages (runPeriodicPostsImages, mkStart) where
 
 import Prelude
 
 import Affjax.ResponseFormat (string)
 import Common as C
-import Control.Promise (toAffE)
 import Data.Array as A
 import Data.Int (fromString)
 import Data.Maybe (Maybe(..))
@@ -80,7 +79,7 @@ runPeriodicPostsImages sendVideo download delay = do
   start <- liftEffect $ mkStart
   let env =
         { downloadText: \x -> download string x.url
-        , sendVideo: \x -> (sendVideo x # toAffE) }
+        , sendVideo: \x -> (sendVideo x) }
   let loop = do
         _ <- start env
         _ <- delay $ fromDuration $ Minutes 15.0
