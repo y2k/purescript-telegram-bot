@@ -67,7 +67,7 @@ unwrapNullable m = toMaybe m # unwrapMaybe
 unwrapMaybe m =
   case m of
     Just x -> pure x
-    Nothing -> throw "no value" # liftEffect
+    Nothing -> throw "no_value" # liftEffect
 
 unwrapEither m =
   case m of

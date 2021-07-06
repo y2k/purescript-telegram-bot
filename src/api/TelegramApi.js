@@ -37,7 +37,6 @@ exports.sendVideo = bot => params => () =>
   bot.sendVideo(params.chat_id, params.url, {
     caption: params.caption,
     reply_to_message_id: params.reply_to_message_id,
-    parse_mode: 'Markdown',
     reply_markup: { inline_keyboard: [params.keyboard] },
     disable_notification: false
   });
