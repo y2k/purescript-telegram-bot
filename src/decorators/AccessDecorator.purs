@@ -5,7 +5,7 @@ import Prelude
 import Common (BotMessage, newRef, readRef, writeRef)
 import Common as C
 import Data.DateTime (DateTime, diff)
-import Data.Map (Map, insert, lookup, singleton)
+import Data.Map (Map, empty, insert, lookup, singleton)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (toMaybe)
 import Data.Time.Duration (Seconds)
@@ -17,7 +17,7 @@ import PureDomain as PD
 type State = { lastResetTime ∷ DateTime , users ∷ Map Int Int }
 
 makeEmptyState :: State
-makeEmptyState = { lastResetTime : bottom, users : mempty }
+makeEmptyState = { lastResetTime : bottom, users : empty }
 
 makeAccessDecorate :: _ -> Aff (_ -> Aff _)
 makeAccessDecorate sendMessage = do

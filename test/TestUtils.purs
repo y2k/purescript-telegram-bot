@@ -1,14 +1,15 @@
 module TestUtils where
 
 import Prelude
-import Effect (Effect)
-import Effect.Console as C
+
 import Data.Argonaut (jsonParser)
-import Data.Either (fromRight)
-import Partial.Unsafe (unsafePartial)
+import Data.Either (fromRight')
+import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Effect.Console as C
 import Effect.Exception (throw)
+import Effect.Exception.Unsafe (unsafeThrow)
 
 foreign import data Queue :: Type -> Type
 foreign import newQueue :: ∀ a. Effect (Queue a)
@@ -25,7 +26,8 @@ runTest name f = do
   C.log $ "== " <> name <> " =="
   f
 
-unsafeParse x = jsonParser x # unsafePartial fromRight
+-- unsafeParse x = jsonParser x # unsafePartial fromRight
+unsafeParse x = jsonParser x # fromRight' (\_ -> unsafeThrow x)
 
 pureA :: ∀ a. a -> Aff a
 pureA x = pure x

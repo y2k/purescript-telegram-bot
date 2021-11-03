@@ -26,7 +26,8 @@ import Effect.Class.Console (error, log)
 import Effect.Exception (throw)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
-import Global.Unsafe (unsafeStringify)
+
+foreign import unsafeStringify :: ∀ a. a -> String
 
 chainMessage msg extract f =
   case extract msg of
@@ -72,7 +73,7 @@ unwrapMaybe m =
 unwrapEither m =
   case m of
     Right x -> pure x
-    Left e -> throw e # liftEffect
+    Left e -> throw (show e) # liftEffect
 
 toIntOrZero x = fromString x # maybe 0 identity
 
