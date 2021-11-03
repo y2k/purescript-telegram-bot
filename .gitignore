@@ -9,4 +9,5 @@
 /.psa*
 /.spago
 /index.js
+/index.js.map
 Playground.*

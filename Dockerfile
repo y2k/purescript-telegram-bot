@@ -13,7 +13,7 @@ COPY src/ src/
 COPY test/*.purs test/*.js test/
 COPY test/resources/*.xml test/resources/
 
-RUN spago test && spago bundle-app
+RUN spago test && spago bundle-app -x
 
 FROM node:17.0.1-alpine3.14
 
@@ -23,7 +23,8 @@ COPY --from=0 /app/package.json /app/yarn.lock ./
 RUN yarn --production
 
 COPY --from=0 /app/index.js .
+COPY --from=0 /app/index.js.map .
 
 ENV export NTBA_FIX_319=1
 
-ENTRYPOINT ["node", "index.js"]
+ENTRYPOINT ["node", "--enable-source-maps", "index.js"]
