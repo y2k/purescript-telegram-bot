@@ -1,7 +1,7 @@
 FROM node:14.5.0-stretch
 
-RUN npm install -g --unsafe-perm purescript@0.13.8
-RUN npm install -g --unsafe-perm spago@0.15.3
+RUN npm install -g --unsafe-perm purescript@0.14.5
+RUN npm install -g --unsafe-perm spago@0.20.3
 
 WORKDIR /app
 
