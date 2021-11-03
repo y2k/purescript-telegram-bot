@@ -51,7 +51,7 @@ assertTelegram msgJson expectedResponses = do
   msg <- unsafeParseJson msgJson
   let env =
         { token: ""
-        , downloadJson: \_ -> T.pureA $ T.unsafeParse """{ "data": { "image_mp4_url": "_VIDEO_URL_" } }"""
+        , downloadJson: \_ -> T.pureA $ T.unsafeParse """{ "data": { "images": { "original": { "mp4": "_VIDEO_URL_" } } } }"""
         , delay: \x -> T.push ("d:" <> (show x)) log *> pure unit # liftEffect
         , telegram:
             { sendVideo: \x -> (unsafeToJson x >>= (\x -> T.push ("sv:" <> x) log)) *> pure { message_id : 42 } # liftEffect
