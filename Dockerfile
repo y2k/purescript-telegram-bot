@@ -1,4 +1,4 @@
-FROM node:14.5.0-stretch
+FROM node:17.0.1-buster
 
 RUN npm install -g --unsafe-perm purescript@0.14.5
 RUN npm install -g --unsafe-perm spago@0.20.3
@@ -15,7 +15,7 @@ COPY test/resources/*.xml test/resources/
 
 RUN spago test && spago bundle-app
 
-FROM node:14.5.0-alpine3.11
+FROM node:17.0.1-alpine3.14
 
 WORKDIR /app
 
