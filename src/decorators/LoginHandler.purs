@@ -12,7 +12,7 @@ import PureDomain as D
 makeCaptchaRequest chat message_id info username =
   { chat_id: chat.id
   , reply_to_message_id: notNull message_id
-  , url: info.data.image_mp4_url
+  , url: info.data.images.original.mp4
   , caption: username <> ", докажите что вы человек.\nНапишите что происходит на картинке. У вас " <> (show D.captchaTimeout) <> " секунд 😸" # notNull
   , keyboard: [] }
 

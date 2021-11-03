@@ -10,7 +10,8 @@ captchaTimeout = 30
 limitCount = 2
 limitPerSedonds = Seconds 15.0
 
-parseImageJson :: Json -> Either JsonDecodeError { data :: { image_mp4_url :: String } }
+-- parseImageJson :: Json -> Either JsonDecodeError { data :: { image_mp4_url :: String } }
+parseImageJson :: Json -> Either JsonDecodeError { data :: { images :: { original :: { mp4 :: String } } } }
 parseImageJson = decodeJson
 
 makeUrl token tag = "https://api.giphy.com/v1/gifs/random?rating=pg&api_key=" <> token <> "&tag=" <> tag

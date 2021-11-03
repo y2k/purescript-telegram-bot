@@ -10,7 +10,7 @@ import PureDomain as D
 makeRerollVideoRequest info tag message =
   { chat_id: message.chat.id
   , message_id: message.message_id
-  , url: (info.data.image_mp4_url :: String)
+  , url: (info.data.images.original.mp4 :: String)
   , keyboard: [ { callback_data: (packData "reroll" tag), text: "🎲 🎲 🎲" } ] }
 
 mapToModel msg = do
