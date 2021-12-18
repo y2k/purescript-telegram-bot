@@ -25,6 +25,7 @@ import PeriodicPostsImages (runPeriodicPostsImages)
 import PostGifHandler (handlePostGif)
 import RerollHandler (handleReroll)
 import TelegramApi (createBot, deleteMessage, editMessageMedia, editMessageReplyMarkup, sendMessage, sendVideo, startBotRepl)
+import IgnoreFirstMessagesDecorator (mkIgnoreFirstMessagesDecorator)
 
 download format url =
   AX.defaultRequest { url = url, method = Left GET, responseFormat = format }
@@ -33,8 +34,9 @@ download format url =
 
 emptyDecorator msg = pure $ Just msg
 
-handleUpdate accessDecorate env =
-  [ logDecorate
+handleUpdate accessDecorate ignoreFirstMessagesDecorator env =
+  [ ignoreFirstMessagesDecorator
+  , logDecorate
   , accessDecorate
   , (handlePostGif env)
   , (handleReroll env)
@@ -58,7 +60,8 @@ mainAsync = do
             }
 
   accessDecorate <- makeAccessDecorate (sendMessage bot >>> liftEffect)
-  let handleBotMessage = handleUpdate accessDecorate env
+  ignoreFirstMessagesDecorator <- mkIgnoreFirstMessagesDecorator
+  let handleBotMessage = handleUpdate accessDecorate ignoreFirstMessagesDecorator env
 
   log $ "Bot started..."
 

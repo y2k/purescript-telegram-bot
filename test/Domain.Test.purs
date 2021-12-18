@@ -60,7 +60,7 @@ assertTelegram msgJson expectedResponses = do
             , deleteMessage: \x -> (unsafeToJson x >>= (\x -> T.push ("dm:" <> x) log)) *> pure unit # liftEffect
             , sendMessage: \x -> (unsafeToJson x >>= (\x -> T.push ("sm:" <> x) log)) *> pure { message_id : 42 } } }
 
-  launchAff_ (handleUpdate emptyDecorator env msg)
+  launchAff_ (handleUpdate emptyDecorator emptyDecorator env msg)
 
   logA <- T.toArray log
   assertEqual
